@@ -22,8 +22,15 @@ nextflow_process{
 
         tag     'xsample'
         tag     'xsample-spatial'
+        tag     'process'
 
         when {
+            params {
+                analyze{
+                    xsample = true
+                    filter = 1
+                }
+            }
             process {
                 """
                 input[0] = CREATE_TEST_ADATA.out.adata.collect()
