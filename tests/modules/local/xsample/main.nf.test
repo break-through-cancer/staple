@@ -47,8 +47,9 @@ nextflow_process{
             assert process.success
             assert process.out.versions
             assert process.out.multiqc_files
-            assert file("${outputDir}/staple/reports/deseq2_diff_response_results_tumor.csv").exists()
-            assert file("${outputDir}/staple/reports/Moran_I_diff_response_results.csv").exists()
+            assert file("${outputDir}/staple/reports/deseq2_diff_response_tumor.csv").exists()
+            assert file("${outputDir}/staple/reports/Moran_I_diff_response.csv").exists()
+            assert file("${outputDir}/staple/reports/neighbors_diff_response.csv").exists()
             assert file("${outputDir}/staple/reports/pseudobulk.h5ad").exists()
         }
     }
@@ -82,7 +83,7 @@ nextflow_process{
             assert process.out.versions
             assert process.out.multiqc_files
             assert file("${outputDir}/staple/reports/pseudobulk.h5ad").exists()
-            assert file("${outputDir}/staple/reports/deseq2_diff_response_results_unstratified.csv").exists()
+            assert file("${outputDir}/staple/reports/deseq2_diff_response_unstratified.csv").exists()
         }
     }
 
@@ -114,13 +115,12 @@ nextflow_process{
             assert process.success
             assert process.out.versions
             assert process.out.multiqc_files
-            assert file("${outputDir}/staple/reports/mqc/average_clustering_mqc.json").exists()
-            assert file("${outputDir}/staple/reports/mqc/closeness_centrality_mqc.json").exists()
-            assert file("${outputDir}/staple/reports/mqc/degree_centrality_mqc.json").exists()
-            assert file("${outputDir}/staple/reports/deseq2_diff_response_results_tumor.csv").exists()
-            assert file("${outputDir}/staple/reports/Moran_I_diff_response_results.csv").exists()
+            assert file("${outputDir}/staple/reports/mqc/centrality_average_clustering_mqc.json").exists()
+            assert file("${outputDir}/staple/reports/mqc/centrality_closeness_centrality_mqc.json").exists()
+            assert file("${outputDir}/staple/reports/mqc/centrality_degree_centrality_mqc.json").exists()
+            assert file("${outputDir}/staple/reports/deseq2_diff_response_tumor.csv").exists()
+            assert file("${outputDir}/staple/reports/Moran_I_diff_response.csv").exists()
             assert file("${outputDir}/staple/reports/svg_pseudobulk.h5ad").exists()
-            assert file("${outputDir}/staple/reports/mqc/co_occurrence_response_non-responder_mqc.json").exists()
         }
     }
 
@@ -150,7 +150,6 @@ nextflow_process{
 
         then {
             assert process.success
-            assert file("${outputDir}/staple/reports/mqc/co_occurrence_response_responder_mqc.json").exists()
         }
     }
     test("Run Xsample with self neighborhood included") {
@@ -167,7 +166,6 @@ nextflow_process{
                     xsample = true
                     filter = 1
                     show_top = 100
-                    spotlight = 'tumor'   // specify cell types to spotlight
                     ignore_self = false   // include self neighborhood in the analysis
                 }
             }

@@ -49,6 +49,7 @@ def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, t
         ligrecs = ligrec_from_adatas(adatas, type='moranI', spotlight=None, samples=samples)
         #pick only the Moran's I value index
         ligrecs = ligrecs[ligrecs.index.get_level_values(-1) == 'I']
+        ligrecs = ligrecs.droplevel(-1)
 
     if pvalues is not None:
         # filter sample ligrec pairs by p-value to reduce multiple testing
@@ -192,7 +193,7 @@ def de_report(de_dict, spotlight=None, filter=0.05, show=100, contrast=None, p='
 
 
 
-def neighbors_report(adatas, spotlight=None, ignore_self=True):
+def neighbors_report(adatas, spotlight=None, groups=None, ignore_self=True):
     self_type = "omitted" if ignore_self else "included"
     if spotlight:
         cell_types = spotlight    
@@ -206,7 +207,7 @@ def neighbors_report(adatas, spotlight=None, ignore_self=True):
                         cell_types[ct] += count
                     else:
                         cell_types[ct] = count
-        cell_types = cell_types.keys()
+        cell_types = list(cell_types.keys())
     
     reports = []
     for cell_type in cell_types:
@@ -226,26 +227,43 @@ def neighbors_report(adatas, spotlight=None, ignore_self=True):
                         continue
                     interaction_dict[other_cell_type] = interactions[i]
                 sample_dict[adata.obs['id'].unique()[0]] = interaction_dict
+        sample_dict['cell_type'] = cell_type
         reports.append(sample_dict)
+
+    # construct a df for export
+    csv_report = pd.concat([pd.DataFrame(r).set_index('cell_type', append=True) for r in reports])
+    csv_report.index.names = ['neighbor', 'cell_type']
+
+    # recycle cell type as not needed in mqc report
+    _cell_type = [r.pop('cell_type') for r in reports]
 
     mqc_report = {
         "id": "spatial_neighbors",
         "plot_type": "bar",
-        "description": f"Cell type neighborhood across samples.\
-The rate of self-neighborhood indicates clustering of a cell type. The rate of neighbors \
-with other cell types (self omitted) indicates how these clusters interact with each \
-other. Self is {self_type} in this report based on the pipeline settings.",
+        "description": f"Cell type neighborhood across samples. The rate of self-neighborhood indicates clustering of a cell type. The rate of neighbors with other cell types (self omitted) indicates how these clusters interact with each other. Self is {self_type} in this report based on the pipeline settings.",
         "pconfig": {
             "title": "Cell type neighborhood across samples",
             "ylab": "Neighboring cell type share",
             "xlab": "Sample",
-            "data_labels": list(cell_types)
-        },
+            "data_labels": cell_types
+            },
         "data": reports
     }
-    return mqc_report
+    return mqc_report, csv_report
 
-def centrality_reports(adatas, spotlight=None, scores=None, uns_key='cell_type_centrality_scores'):
+def diff_neighbors_report(neighbors_df:pd.DataFrame, group1=None, group2=None):
+    # ALR transform using self neighborhood as the reference and pad for 0s
+    report = neighbors_df.copy()
+    for neighbor, cell_type in neighbors_df.index:
+        self_value = neighbors_df.loc[(cell_type, cell_type)]
+        alr = np.log((neighbors_df.loc[(neighbor, cell_type)] + 1e-10) / (self_value + 1e-10))
+        report.loc[(neighbor, cell_type)] = alr
+    
+    # run ttest across samples for each neighbor-cell_type pair
+    diff_neighbors = xsample_ttest(report, group1, group2)
+    return diff_neighbors
+
+def centrality_reports(adatas, spotlight=None, groups=None, uns_key='cell_type_centrality_scores'):
     #separately for each score as multiqc does not support data_labels for heatmaps
     memos = {
         'closeness_centrality': "This graph measure reflects how close the group is to other nodes.",
@@ -256,11 +274,7 @@ def centrality_reports(adatas, spotlight=None, scores=None, uns_key='cell_type_c
     adatas_scores = [a.uns[uns_key].keys().tolist() for a in adatas if uns_key in a.uns]
     if not adatas_scores:
         return {}
-    all_scores = set.union(*[set(s) for s in adatas_scores])
-    if scores:
-        scores = all_scores.intersection(set(scores))
-    else:
-        scores = all_scores
+    scores = set.union(*[set(s) for s in adatas_scores])
     reports = {}
     for score in scores:
         sample_dict = {}
@@ -278,6 +292,14 @@ def centrality_reports(adatas, spotlight=None, scores=None, uns_key='cell_type_c
                 if cell_type in cell_types:
                     centrality_dict[cell_type] = centrality_scores.iloc[i]
             sample_dict[adata.obs['id'].unique()[0]] = centrality_dict
+            # differential scores if groups are provided
+            csv_report = pd.DataFrame(sample_dict)
+            if groups:
+                try:
+                    group1, group2 = groups
+                    csv_report = xsample_ttest(csv_report, group1, group2)
+                except Exception as e:
+                    log.warning(f"Could not perform t-test for score {score}: {e}")
 
         mqc_report = {
             "id": f"{score}",
@@ -290,7 +312,7 @@ def centrality_reports(adatas, spotlight=None, scores=None, uns_key='cell_type_c
             },
             "data": sample_dict
         }
-        reports[score] = mqc_report
+        reports[score] = [mqc_report, csv_report]
     return reports
 
 
@@ -482,7 +504,7 @@ if __name__ == '__main__':
     adata_paths = collected.split(" ")
     adatas = [ad.read_h5ad(path, backed="r") for path in adata_paths]
 
-    #place all mqc reports here
+    #place all csv and mqc reports here
     reports_dir = "reports"
     os.makedirs(reports_dir, exist_ok=True)
     mqc_reports_dir = "reports/mqc"
@@ -491,9 +513,8 @@ if __name__ == '__main__':
     # generate neighbors report
     try:
         log.info("Generating neighbors report.")
-        neighbors = neighbors_report(adatas, spotlight=spotlight, ignore_self=ignore_self)
-        with open(f"{mqc_reports_dir}/neighbors_mqc.json","w") as f:
-            json.dump(neighbors, f, indent=4)
+        neigh_mqc, neigh_csv = neighbors_report(adatas, spotlight=spotlight, ignore_self=ignore_self)
+        save_reports(neigh_mqc, neigh_csv, "neighbors")
     except Exception as e:
         log.warning(f"Could not generate neighbors report: {e}")
 
@@ -502,8 +523,7 @@ if __name__ == '__main__':
         log.info("Generating centrality report.")
         centrality = centrality_reports(adatas, spotlight=spotlight)
         for score, report in centrality.items():
-            with open(f"{mqc_reports_dir}/{score}_mqc.json","w") as f:
-                json.dump(report, f, indent=4)
+            save_reports(report[0], report[1], f"centrality_{score}")
     except Exception as e:
         log.warning(f"Could not generate centrality report: {e}")
 
@@ -519,12 +539,8 @@ if __name__ == '__main__':
     # prepare pseudobulk adata for deseq2, with all variables as grouping variables
     if pb_vars:
         # split comma-separated variables, trim whitespace, and preserve order without duplicates
-        raw_vars = pb_vars.split(",")
-        pb_vars = []
-        for v in raw_vars:
-            v = v.strip()
-            if v and v not in pb_vars:
-                pb_vars.append(v)
+        raw_vars = [v.strip() for v in pb_vars.split(",")]
+        pb_vars = [v for v in dict.fromkeys(raw_vars) if v]
         log.info(f"Using specified variables for pseudobulk grouping: {pb_vars}")
     else:
         # start from all_vars as a list, preserving order and removing duplicates
@@ -544,58 +560,55 @@ if __name__ == '__main__':
         pb_adata.write(f"{reports_dir}/pseudobulk.h5ad")
     
     # make reports
+    supported_heatmap_tools = ['squidpy_ligrec', 'spacemarkers_LRscores', 'Moran_I']
     # if no cats found, just produce overall reports
     if cats is None or len(cats) == 0:
-        try:
-            res_mqc, res = heatmap_report(adatas, spotlight=spotlight, show=show, tool='squidpy_ligrec', filter=filter)
-            save_reports(res_mqc, res, "ligrec_overall")
-        except Exception as e:
-            log.warning(f"Could not generate overall ligand-receptor report: {e}")
-        try:
-            lrs_mqc, lrs = heatmap_report(adatas, spotlight=spotlight, show=show, tool='spacemarkers_LRscores', filter=filter)
-            save_reports(lrs_mqc, lrs, "lrscores_overall")
-        except Exception as e:
-            log.warning(f"Could not generate overall LR scores report: {e}")
-        try:
-            moran_mqc, moran = heatmap_report(adatas, spotlight=spotlight, show=show, tool='Moran_I', filter=filter)
-            save_reports(moran_mqc, moran, "moranI_overall")
-        except Exception as e:
-            log.warning(f"Could not generate overall Moran's I report: {e}")
+        # cycle through tools with supported heatmap reports
+        for r in supported_heatmap_tools:
+            try:
+                res_mqc, res = heatmap_report(adatas, spotlight=spotlight, show=show, tool=r, filter=filter)
+                save_reports(res_mqc, res, f"{r}_overall")
+            except Exception as e:
+                log.warning(f"Could not generate overall report for {r}: {e}")
         try:
             co_occ_mqc, co_occ_csv = co_occurrence_report(adatas, spotlight=spotlight)
-            save_reports(co_occ_mqc, co_occ_csv, "co_occurrence_overall", mqc_reports_dir, reports_dir)
+            save_reports(co_occ_mqc, co_occ_csv, "co_occurrence_overall")
         except Exception as e:
             log.warning(f"Could not generate overall co-occurrence report: {e}")
+
+    # for variables with 2 groups, perform contrast tests
     else:
-        # for variables with 2 groups, perform appropriate tests
         for var in cats.keys():
             groups = [x for x in cats[var]]
             group1 = cats[var][groups[0]].tolist()
             group2 = cats[var][groups[1]].tolist()
             
-            #squidpy ligrec
+            #diff neighbors report
             try:
-                res_mqc, res = heatmap_report(adatas, groups=[group1,group2],
-                                              spotlight=spotlight, show=show, tool="squidpy_ligrec", filter=filter)
-                save_reports(res_mqc, res, f"ligrec_diff_{var}_results")
+                log.info("Generating differential neighbors report.")
+                res_mqc, res_csv = neighbors_report(adatas, spotlight=spotlight, ignore_self=False)
+                diff_res = diff_neighbors_report(res_csv, group1=group1, group2=group2)
+                save_reports(None, diff_res, f"neighbors_diff_{var}")
             except Exception as e:
-                log.warning(f"Could not generate ligand-receptor report for variable {var}: {e}")
-            # SpaceMarkers LR scores
-            try:
-                lrs_mqc, lrs = heatmap_report(adatas, groups=[group1,group2],
-                                              spotlight=spotlight, show=show, tool='spacemarkers_LRscores', filter=filter)
-                save_reports(lrs_mqc, lrs, f"lrscores_diff_{var}_results")
-            except Exception as e:
-                log.warning(f"Could not generate LR scores report for variable {var}: {e}")
+                log.warning(f"Could not generate neighbors report for variable {var}: {e}")
+            
+            # cycle through tools with supported heatmap reports for each variable
+            for r in supported_heatmap_tools:
+                try:
+                    res_mqc, res = heatmap_report(adatas, groups=[group1,group2],
+                                                  spotlight=spotlight, show=show, tool=r, filter=filter)
+                    save_reports(res_mqc, res, f"{r}_diff_{var}")
+                except Exception as e:
+                    log.warning(f"Could not generate {r} report for variable {var}: {e}")
 
-            # Moran's I
+            # differential centrality reports
             try:
-                moran_mqc, moran = heatmap_report(adatas, groups=[group1,group2],
-                                                  spotlight=spotlight, show=show, tool='Moran_I', filter=filter)
-                save_reports(moran_mqc, moran, f"Moran_I_diff_{var}_results")
+                log.info("Generating differential centrality reports.")
+                centrality_reports_res = centrality_reports(adatas, spotlight=spotlight, groups=[group1, group2])
+                for score, report in centrality_reports_res.items():
+                    save_reports(report[0], report[1], f"centrality_{score}_diff_{var}")
             except Exception as e:
-                log.warning(f"Could not generate Moran's I report for variable {var}: {e}")
-
+                log.warning(f"Could not generate centrality report for variable {var}: {e}")
 
             # deseq2 on pseudobulks split by cell type
             try:
@@ -622,29 +635,52 @@ if __name__ == '__main__':
                     else:
                         log.info(f"Deseq2 results for {ct} cell type with variable {var}:{deseq_res.shape[0]} significant genes found.")
                         de_results[ct] = deseq_res
-                        deseq_res.to_csv(f"{reports_dir}/deseq2_diff_{var}_results_{ct}.csv")
+                        deseq_res.to_csv(f"{reports_dir}/deseq2_diff_{var}_{ct}.csv")
                 mqc_report = de_report(de_results, spotlight=spotlight, filter=filter, show=show, contrast=contrasts)
-                save_reports(mqc_report, None, f"deseq2_diff_{var}_results",
+                save_reports(mqc_report, None, f"deseq2_diff_{var}",
                                 mqc_reports_dir, reports_dir)
             except Exception as e:
                 log.warning(f"Could not perform DESeq2 analysis for variable {var}: {e}")
 
             # co-occurence by groups (place each adata in the appropriate group based on its obs)
             try:
-                g1_adatas = [a for a in adatas if a.obs[var].unique()[0] == groups[0]]
-                g2_adatas = [a for a in adatas if a.obs[var].unique()[0] == groups[1]]
-                log.info(f"Generating co-occurrence report for variable {var} with groups {groups}. Group 1 has {len(g1_adatas)} samples, group 2 has {len(g2_adatas)} samples.")
-                co_occ_g1_mqc, co_occ_g1_csv = co_occurrence_report(g1_adatas, spotlight=spotlight)
-                co_occ_g2_mqc, co_occ_g2_csv = co_occurrence_report(g2_adatas, spotlight=spotlight)
-                save_reports(co_occ_g1_mqc, co_occ_g1_csv, f"co_occurrence_{var}_{groups[0]}",
-                                mqc_reports_dir, reports_dir)
-                save_reports(co_occ_g2_mqc, co_occ_g2_csv, f"co_occurrence_{var}_{groups[1]}",
-                                mqc_reports_dir, reports_dir)
+                co_occ_mqc, co_occ_csv = co_occurrence_report(adatas, spotlight=spotlight)
+                co_occ_csv.insert(0, 'group', np.where(co_occ_csv.index.get_level_values('sample').isin(group1), groups[0], groups[1]))
+                reports = []
+                cell_types = co_occ_csv.index.get_level_values('cell_type').unique()
+                for ct in cell_types:
+                    ct_df = co_occ_csv.xs(ct, level='cell_type')
+                    group1_df = ct_df[ct_df['group'] == groups[0]].drop(columns='group')
+                    group2_df = ct_df[ct_df['group'] == groups[1]].drop(columns='group')
+                    # compute median distance between groups for each co-occurring cell type
+                    g1 = group1_df.groupby(['co_cell_type']).median()
+                    g2 = group2_df.groupby(['co_cell_type']).median()
+                    common_index = g1.index.intersection(g2.index)
+                    g1, g2 = g1.loc[common_index], g2.loc[common_index]
+                    z_diff = (g1 - g2)
+                    report_dict = z_diff.to_dict(orient='index')
+                    z_diff_report = {
+                        k: [[i, report_dict[k][i]] for i in report_dict[k].keys()]
+                        for k in report_dict.keys()
+                    }
+                    reports.append(z_diff_report)
+                mqc_report = {
+                    "id": f"co_occurrence_diff_{var}",
+                    "plot_type": "linegraph",
+                    "description": f"Median difference of co-occurrence across groups of variable {var}.",
+                    "pconfig": {
+                        "title": f"Co-occurrence difference by {var}",
+                        "ylab": "Median difference",
+                        "xlab": "Co-occurring cell type",
+                        "data_labels": list(cell_types)
+                    },
+                    "data": reports
+                }
+                save_reports(mqc_report, co_occ_csv, f"co_occurrence_diff_{var}", mqc_reports_dir, reports_dir)
             except Exception as e:
                 log.warning(f"Could not generate co-occurrence report for variable {var}: {e}")
 
     #wrapup
     for adata in adatas:
         adata.file.close()
-
 
