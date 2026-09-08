@@ -28,8 +28,11 @@ def ligrec_from_adatas(adatas, type='ligrec_means', axis=1,
         log.info(f"Filtering {type} to only spatially variable genes.")
         sp_indices = [x.var[x.var['spatially_variable']].index.tolist() for x in adatas]
         ligrec_indices = [x.index.tolist() for x in ligrecs]
-        spatial_ligrec_indices = [idx for idx in ligrec_indices if any(sp in idx for sp in sp_indices)]
-        ligrecs = [x.loc[x.index.isin(spatial_ligrec_indices)] for x in ligrecs]
+        spatial_ligrec_indices = []
+        for i, (sp, lg) in enumerate(zip(sp_indices, ligrec_indices)):
+            sample_indices = [idx for idx in lg if any(s in idx for s in sp)]
+            spatial_ligrec_indices.append(sample_indices)
+        ligrecs = [x.loc[x.index.isin(sp)] for x, sp in zip(ligrecs, spatial_ligrec_indices)]
 
     # combine sample level
     combined = pd.concat(ligrecs, keys=samples, axis=axis)
