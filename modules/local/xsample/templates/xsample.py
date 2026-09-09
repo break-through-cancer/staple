@@ -17,28 +17,29 @@ from pydeseq2.ds import DeseqStats
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
-def ligrec_from_adatas(adatas, type='ligrec_means', axis=1,
+def ligrec_from_adatas(adatas, int_type='ligrec_means', axis=1,
                             samples=None, spotlight=None, only_spatial=False):
 
     # extract stat from each adata
-    ligrecs = [x.uns[type] for x in adatas if type in x.uns]
-
-    # look if spatial genes are present in ligrec indices (dash-separated) if only_spatial
-    if only_spatial:
-        log.info(f"Filtering {type} to only spatially variable genes.")
-        sp_indices = [x.var[x.var['spatially_variable']].index.tolist() for x in adatas]
-        ligrec_indices = [x.index.tolist() for x in ligrecs]
-        spatial_ligrec_indices = []
-        for i, (sp, lg) in enumerate(zip(sp_indices, ligrec_indices)):
-            sample_indices = [idx for idx in lg if any(s in idx for s in sp)]
-            spatial_ligrec_indices.append(sample_indices)
-        ligrecs = [x.loc[x.index.isin(sp)] for x, sp in zip(ligrecs, spatial_ligrec_indices)]
+    ligrecs = [x.uns[int_type] for x in adatas if int_type in x.uns]
 
     # combine sample level
     combined = pd.concat(ligrecs, keys=samples, axis=axis)
 
-    # move cell types to columns and perform the t-test
+    # move cell types to columns and filter and later perform constrasts test
     res = combined.stack(future_stack=True)
+    log.info(f"Got combined {int_type} matrix with shape {res.shape}")
+
+    # look if spatial genes are present in ligrec indices (dash-separated) if only_spatial
+    if only_spatial:
+        log.info(f"Filtering {int_type} to spatially variable genes at least in one sample.")
+        sp_indices = set()
+        for x in adatas:
+            sp_indices.update(x.var[x.var['spatially_variable']].index.tolist())
+        res_indices = set(res.index.get_level_values(0))
+        res_indices = [idx for idx in res_indices if any(s in idx for s in sp_indices)]
+        res = res.loc[res.index.get_level_values(0).isin(res_indices)]
+        log.info(f"Filtered {int_type} matrix to spatially variable genes with shape {res.shape}")
 
     # if a cell type or pair has been specified, filter to that only
     if spotlight:
@@ -52,13 +53,13 @@ def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, t
     pvalues = None
     # squipy ligrec is not spatial by default, so let's filter that to only spatial if requested
     if tool =='squidpy_ligrec':
-        ligrecs = ligrec_from_adatas(adatas, type='ligrec_means', spotlight=spotlight, samples=samples, only_spatial=only_spatial)
-        pvalues = ligrec_from_adatas(adatas, type='ligrec_pvalues', spotlight=spotlight, samples=samples, only_spatial=only_spatial)
+        ligrecs = ligrec_from_adatas(adatas, int_type='ligrec_means', spotlight=spotlight, samples=samples, only_spatial=only_spatial)
+        pvalues = ligrec_from_adatas(adatas, int_type='ligrec_pvalues', spotlight=spotlight, samples=samples, only_spatial=only_spatial)
     elif tool =='spacemarkers_LRscores':
-        ligrecs = ligrec_from_adatas(adatas, type='LRscores', spotlight=spotlight, samples=samples)
+        ligrecs = ligrec_from_adatas(adatas, int_type='LRscores', spotlight=spotlight, samples=samples)
     elif tool =='Moran_I':
         #Moran's I is not per cell type pair, so no spotlighting (yet)
-        ligrecs = ligrec_from_adatas(adatas, type='moranI', spotlight=None, samples=samples)
+        ligrecs = ligrec_from_adatas(adatas, int_type='moranI', spotlight=None, samples=samples)
         #pick only the Moran's I value index
         ligrecs = ligrecs[ligrecs.index.get_level_values(-1) == 'I']
         ligrecs = ligrecs.droplevel(-1)
@@ -424,7 +425,6 @@ def co_occurrence_report(adatas, spotlight=None, uns_key='cell_type_co_occurrenc
     return mqc_report, csv_report
 
 
-
 def plot_hist(df_pair, title=None, save=True):
     import matplotlib.pyplot as plt
     import seaborn as sns
@@ -439,12 +439,15 @@ def plot_hist(df_pair, title=None, save=True):
 
 def xsample_ttest(df, group1, group2):
     res = df.copy()
-    test = sp.stats.ttest_ind(res[group1], res[group2], axis=1)
+    test = sp.stats.ttest_ind(res[group1], res[group2], axis=1, nan_policy='omit')
     res['statistic'] = test.statistic
     res['pval'] = test.pvalue
-    res.dropna(inplace=True)
-    res['pval_adj'] = sp.stats.false_discovery_control(res['pval'], method='bh')
+    padj = res['pval'].copy()
+    valid = ~np.isnan(res['pval'])
+    padj[valid] = sp.stats.false_discovery_control(res['pval'][valid], method='bh')
+    res['pval_adj'] = padj
     res.sort_values('pval_adj', inplace=True)
+    res.dropna(subset=['pval','pval_adj'], inplace=True)
 
     return res
 
