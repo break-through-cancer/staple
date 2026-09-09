@@ -178,22 +178,22 @@ def pydeseq_results(pb_adata, spotlight=None, cpus=1, design=None, contrast=None
 
     return de
 
-def de_report(de_dict, spotlight=None, filter=0.05, show=100, contrast=None, p='padj'):
+def de_report(de_dict, spotlight=None, filter=0.05, show=100, contrast=None, p='padj', add_memo=None):
     #plot logfoldchangs vs -log padj for all genes
     # multiqc want this format: "gene1": {"x": 1, "y": 2}
     # x is log2 fold change, y is -log10 adjusted p-value
     # show_p is mainly for testng purposes to allow plotting
     reports = []
     for de in de_dict.values():
-        res_sig = de['results'][de['results'][p] <= filter]
+        res_sig = de[de[p] <= filter]
         res_sig_show = res_sig.sort_values(p).head(show)
         res_sig_show.rename(columns={"log2FoldChange": "x", p: "y"}, inplace=True)
         res_sig_show['y'] = -np.log10(res_sig_show['y'])
         res_dict = res_sig_show.loc[:, ['x','y']].to_dict(orient='index')
         reports.append(res_dict)
     memo = f"DESeq2 results for {contrast[0]} variable with significant DE genes ({p}<={filter}) between {contrast[1]} and {contrast[2]}. Log2 fold change (X) and -log10 adjusted p-value (Y) shown."
-    if any(de['only_spatial'] for de in de_dict.values()):
-        memo += " Only spatially variable genes shown."
+    if add_memo:
+        memo += f" {add_memo}"
 
     mqc_report = {
         "id": f"deseq2_{contrast[0]}",
@@ -663,6 +663,15 @@ if __name__ == '__main__':
                         log.info(f"Deseq2 results for {ct} cell type with variable {var}:{deseq_res.shape[0]} significant genes found.")
                         de_results[ct] = deseq_res
                         deseq_res.to_csv(f"{reports_dir}/deseq2_diff_{var}_{ct}.csv")
+                if de['only_spatial']:
+                    add_memo = "Only spatially variable genes shown."
+                else:
+                    add_memo = None
+                mqc_report = de_report(de_results, spotlight=spotlight, filter=filter, show=show, contrast=contrasts, add_memo=add_memo)
+                save_reports(mqc_report, None, f"deseq2_diff_{var}",
+                                mqc_reports_dir, reports_dir)
+            except Exception as e:
+                log.warning(f"Could not perform DESeq2 analysis for variable {var}: {e}")
                 mqc_report = de_report(de_results, spotlight=spotlight, filter=filter, show=show, contrast=contrasts)
                 save_reports(mqc_report, None, f"deseq2_diff_{var}",
                                 mqc_reports_dir, reports_dir)
