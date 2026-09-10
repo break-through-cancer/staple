@@ -48,7 +48,7 @@ def ligrec_from_adatas(adatas, int_type='ligrec_means', axis=1,
 
     return res
 
-def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, tool=None, only_spatial=False):
+def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, tool=None, only_spatial=False, var=None):
     samples = [a.obs['id'].unique()[0] for a in adatas]
     pvalues = None
     # squipy ligrec is not spatial by default, so let's filter that to only spatial if requested
@@ -104,9 +104,13 @@ def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, t
 
     res_show = res[samples][:show]
     res_dict = res_show.to_dict()
+    if var:
+        id = f"{tool}_by_{var}"
+    else:
+        id = f"{tool}"
 
     mqc_report = {
-        "id": f"{tool}_interactions",
+        "id": id,
         "description": memo,
         "plot_type": "heatmap",
         "pconfig": {
@@ -592,12 +596,12 @@ if __name__ == '__main__':
             try:
                 res_mqc, res = heatmap_report(adatas, spotlight=spotlight, show=show,
                                               tool=r, filter=filter, only_spatial=only_spatial)
-                save_reports(res_mqc, res, f"{r}_overall")
+                save_reports(res_mqc, res, f"{r}")
             except Exception as e:
                 log.warning(f"Could not generate overall report for {r}: {e}")
         try:
             co_occ_mqc, co_occ_csv = co_occurrence_report(adatas, spotlight=spotlight)
-            save_reports(co_occ_mqc, co_occ_csv, "co_occurrence_overall")
+            save_reports(co_occ_mqc, co_occ_csv, "co_occurrence")
         except Exception as e:
             log.warning(f"Could not generate overall co-occurrence report: {e}")
 
@@ -613,7 +617,7 @@ if __name__ == '__main__':
                 log.info("Generating differential neighbors report.")
                 res_mqc, res_csv = neighbors_report(adatas, spotlight=spotlight, ignore_self=False)
                 diff_res = diff_neighbors_report(res_csv, group1=group1, group2=group2)
-                save_reports(None, diff_res, f"neighbors_diff_{var}")
+                save_reports(None, diff_res, f"neighbors_by_{var}")
             except Exception as e:
                 log.warning(f"Could not generate neighbors report for variable {var}: {e}")
             
@@ -623,8 +627,9 @@ if __name__ == '__main__':
                     res_mqc, res = heatmap_report(adatas, groups=[group1,group2],
                                                   spotlight=spotlight, show=show,
                                                   tool=r, filter=filter,
-                                                  only_spatial=only_spatial)
-                    save_reports(res_mqc, res, f"{r}_diff_{var}")
+                                                  only_spatial=only_spatial,
+                                                  var=var)
+                    save_reports(res_mqc, res, f"{r}_by_{var}")
                 except Exception as e:
                     log.warning(f"Could not generate {r} report for variable {var}: {e}")
 
@@ -633,7 +638,7 @@ if __name__ == '__main__':
                 log.info("Generating differential centrality reports.")
                 centrality_reports_res = centrality_reports(adatas, spotlight=spotlight, groups=[group1, group2])
                 for score, report in centrality_reports_res.items():
-                    save_reports(report[0], report[1], f"centrality_{score}_diff_{var}")
+                    save_reports(report[0], report[1], f"centrality_{score}_by_{var}")
             except Exception as e:
                 log.warning(f"Could not generate centrality report for variable {var}: {e}")
 
@@ -662,18 +667,18 @@ if __name__ == '__main__':
                     else:
                         log.info(f"Deseq2 results for {ct} cell type with variable {var}:{deseq_res.shape[0]} significant genes found.")
                         de_results[ct] = deseq_res
-                        deseq_res.to_csv(f"{reports_dir}/deseq2_diff_{var}_{ct}.csv")
+                        deseq_res.to_csv(f"{reports_dir}/deseq2_by_{var}_{ct}.csv")
                 if de['only_spatial']:
                     add_memo = "Only spatially variable genes shown."
                 else:
                     add_memo = None
                 mqc_report = de_report(de_results, spotlight=spotlight, filter=filter, show=show, contrast=contrasts, add_memo=add_memo)
-                save_reports(mqc_report, None, f"deseq2_diff_{var}",
+                save_reports(mqc_report, None, f"deseq2_by_{var}",
                                 mqc_reports_dir, reports_dir)
             except Exception as e:
                 log.warning(f"Could not perform DESeq2 analysis for variable {var}: {e}")
                 mqc_report = de_report(de_results, spotlight=spotlight, filter=filter, show=show, contrast=contrasts)
-                save_reports(mqc_report, None, f"deseq2_diff_{var}",
+                save_reports(mqc_report, None, f"deseq2_by_{var}",
                                 mqc_reports_dir, reports_dir)
             except Exception as e:
                 log.warning(f"Could not perform DESeq2 analysis for variable {var}: {e}")
@@ -704,7 +709,7 @@ if __name__ == '__main__':
                 if spotlight:
                     memo += f" Spotlight mode on {spotlight}"
                 mqc_report = {
-                    "id": f"co_occurrence_diff_{var}",
+                    "id": f"co_occurrence_by_{var}",
                     "plot_type": "linegraph",
                     "description": memo,
                     "pconfig": {
@@ -715,7 +720,7 @@ if __name__ == '__main__':
                     },
                     "data": reports
                 }
-                save_reports(mqc_report, co_occ_csv, f"co_occurrence_diff_{var}", mqc_reports_dir, reports_dir)
+                save_reports(mqc_report, co_occ_csv, f"co_occurrence_by_{var}", mqc_reports_dir, reports_dir)
             except Exception as e:
                 log.warning(f"Could not generate co-occurrence report for variable {var}: {e}")
 
