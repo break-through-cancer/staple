@@ -617,7 +617,30 @@ if __name__ == '__main__':
                 log.info("Generating differential neighbors report.")
                 res_mqc, res_csv = neighbors_report(adatas, spotlight=spotlight, ignore_self=False)
                 diff_res = diff_neighbors_report(res_csv, group1=group1, group2=group2)
-                save_reports(None, diff_res, f"neighbors_by_{var}")
+
+                #compose mqc report TODO move to a separate function for reusability
+                mqc_data = diff_res.reset_index()
+                mqc_data.set_index(mqc_data['cell_type']+'-'+mqc_data['neighbor'], inplace=True)
+                mqc_data_sig = mqc_data['pval_adj'] <= filter
+                mqc_data.index = [x+'*' if mqc_data_sig.loc[x] else x for x in mqc_data.index]
+                mqc_data.drop(['neighbor','cell_type', 'statistic', 'pval', 'pval_adj'], axis=1, inplace=True)
+                memo = f"cell_type-neighbors by {var}: t-test on ALR normalized counts relative to self-neighbors."
+                if spotlight:
+                    memo += f" Spotlight on {spotlight}."
+                if len(mqc_data_sig) > 0:
+                    memo += f" There are {mqc_data_sig.sum()} significant (p_adj<={filter}) results marked with *."
+                diff_mqc = {
+                    "id": f"neighbors_by_{var}",
+                    "plot_type": "table",
+                    "description": memo,
+                    "pconfig": {
+                        "title": f"Differential cell_type-neighbors by {var}",
+                        "ylab": "Cell type",
+                        "xlab": "Sample"
+                    },
+                    "data": mqc_data.to_dict()
+                }
+                save_reports(diff_mqc, diff_res, f"neighbors_by_{var}")
             except Exception as e:
                 log.warning(f"Could not generate neighbors report for variable {var}: {e}")
             

@@ -119,6 +119,7 @@ nextflow_process{
             assert file("${outputDir}/staple/reports/mqc/centrality_closeness_centrality_mqc.json").exists()
             assert file("${outputDir}/staple/reports/mqc/centrality_degree_centrality_mqc.json").exists()
             assert file("${outputDir}/staple/reports/mqc/deseq2_by_response_mqc.json").exists()
+            assert file("${outputDir}/staple/reports/mqc/neighbors_by_response_mqc.json").exists()
             assert file("${outputDir}/staple/reports/deseq2_by_response_tumor.csv").exists()
             assert file("${outputDir}/staple/reports/Moran_I_by_response.csv").exists()
             assert file("${outputDir}/staple/reports/svg_pseudobulk.h5ad").exists()
