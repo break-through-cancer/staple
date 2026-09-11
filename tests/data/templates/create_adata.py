@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import anndata as ad
 import numpy as np
 import pandas as pd
@@ -86,11 +85,19 @@ def make_one_adata(n=25, m=1000, pct_mito=0.1, sample_id='sample', with_metadata
     # mark some genes as spatially variable for testing
     adata.var['spatially_variable'] = adata.uns['moranI']['I'] > adata.uns['moranI']['I'].median()
     
+    # rename spatial genes for easier debugging
+    adata.var_names = ['spatial_' + g if s else g for g, s in zip(adata.var_names, adata.var['spatially_variable'])]
+    
     # add dummy ligand-receptor interactions for testing. ligand receptor data
     # is adata.uns['ligrec_means'], adata.uns['ligrec_pvalues']
     # with gene-pairs in row index, and celltype pairs in columns
+    # make some interactions from spatially variable genes, and some from 
+    # non-spatially variable genes
     cell_types = adata.obs['cell_type'].cat.categories
-    gene_pairs =  ['-'.join(['var_' + str(i), 'var_' + str(j)]) for i in range(10) for j in range(10)]
+    spatial = adata.var[adata.var['spatially_variable']].index
+    non_spatial = adata.var[~adata.var['spatially_variable']].index
+    gene_pairs = ['-'.join([g1, g2]) for g1, g2 in zip(spatial[:5], spatial[:5])] + \
+        ['-'.join([g1, g2]) for g1, g2 in zip(non_spatial[:5], non_spatial[:5])]
     celltype_pairs = ['-'.join([ct1, ct2]) for ct1 in cell_types for ct2 in cell_types]
     ligrec_means = pd.DataFrame(np.random.rand(len(gene_pairs), len(celltype_pairs)), index=gene_pairs, columns=celltype_pairs)
     ligrec_pvalues = pd.DataFrame(np.random.rand(len(gene_pairs), len(celltype_pairs)), index=gene_pairs, columns=celltype_pairs)

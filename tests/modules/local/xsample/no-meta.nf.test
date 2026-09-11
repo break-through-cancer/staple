@@ -48,10 +48,10 @@ nextflow_process{
             assert process.success
             assert process.out.versions
             assert process.out.multiqc_files
-            assert file("${outputDir}/staple/reports/mqc/moranI_overall_mqc.json").exists()
+            assert file("${outputDir}/staple/reports/mqc/Moran_I_mqc.json").exists()
             assert file("${outputDir}/staple/reports/mqc/neighbors_mqc.json").exists()
             assert file("${outputDir}/staple/reports/pseudobulk.h5ad").exists()
-            assert file("${outputDir}/staple/reports/mqc/co_occurrence_overall_mqc.json").exists()
+            assert file("${outputDir}/staple/reports/mqc/co_occurrence_mqc.json").exists()
         }
     }
 }
