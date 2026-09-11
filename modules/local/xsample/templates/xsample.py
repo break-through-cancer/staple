@@ -200,7 +200,7 @@ def de_report(de_dict, spotlight=None, filter=0.05, show=100, contrast=None, p='
         memo += f" {add_memo}"
 
     mqc_report = {
-        "id": f"deseq2_{contrast[0]}",
+        "id": f"deseq2_by_{contrast[0]}",
         "description": memo,
         "plot_type": "scatter",
         "pconfig": {
