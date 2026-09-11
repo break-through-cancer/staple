@@ -100,7 +100,7 @@ def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, t
                  were specified in the sample sheet."
 
     if tool == 'squidpy_ligrec' and only_spatial:
-        memo += " Only spatially variable genes included."
+        memo += " Only interactions with at least 1 spatially variable genes included."
 
     res_show = res[samples][:show]
     res_dict = res_show.to_dict()
