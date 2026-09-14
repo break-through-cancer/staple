@@ -700,11 +700,6 @@ if __name__ == '__main__':
                                 mqc_reports_dir, reports_dir)
             except Exception as e:
                 log.warning(f"Could not perform DESeq2 analysis for variable {var}: {e}")
-                mqc_report = de_report(de_results, spotlight=spotlight, filter=filter, show=show, contrast=contrasts)
-                save_reports(mqc_report, None, f"deseq2_by_{var}",
-                                mqc_reports_dir, reports_dir)
-            except Exception as e:
-                log.warning(f"Could not perform DESeq2 analysis for variable {var}: {e}")
 
             # co-occurence by groups (place each adata in the appropriate group based on its obs)
             try:
