@@ -26,7 +26,7 @@ def ligrec_from_adatas(adatas, int_type='ligrec_means', axis=1,
     # combine sample level
     combined = pd.concat(ligrecs, keys=samples, axis=axis)
 
-    # move cell types to columns and filter and later perform constrasts test
+    # move cell types to columns and filter before performing contrast tests
     res = combined.stack(future_stack=True)
     log.info(f"Got combined {int_type} matrix with shape {res.shape}")
 
@@ -37,7 +37,7 @@ def ligrec_from_adatas(adatas, int_type='ligrec_means', axis=1,
         for x in adatas:
             sp_indices.update(x.var[x.var['spatially_variable']].index.tolist())
         res_indices = set(res.index.get_level_values(0))
-        res_indices = [idx for idx in res_indices if any(s in idx for s in sp_indices)]
+        res_indices = [idx for idx in res_indices if any(gene in sp_indices for gene in str(idx).split('-'))]
         res = res.loc[res.index.get_level_values(0).isin(res_indices)]
         log.info(f"Filtered {int_type} matrix to spatially variable genes with shape {res.shape}")
 
@@ -51,7 +51,7 @@ def ligrec_from_adatas(adatas, int_type='ligrec_means', axis=1,
 def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, tool=None, only_spatial=False, var=None):
     samples = [a.obs['id'].unique()[0] for a in adatas]
     pvalues = None
-    # squipy ligrec is not spatial by default, so let's filter that to only spatial if requested
+    # Squidpy ligrec is not spatial by default, so let's filter that to only spatial if requested
     if tool =='squidpy_ligrec':
         ligrecs = ligrec_from_adatas(adatas, int_type='ligrec_means', spotlight=spotlight, samples=samples, only_spatial=only_spatial)
         pvalues = ligrec_from_adatas(adatas, int_type='ligrec_pvalues', spotlight=spotlight, samples=samples, only_spatial=only_spatial)
