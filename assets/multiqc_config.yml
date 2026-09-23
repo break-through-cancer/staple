@@ -12,16 +12,16 @@ custom_data:
   samplesheet:
     plot_type: 'table'
     section_name: 'Sample Sheet'
-    description: 'The sample sheet provided as input to the pipeline.'
+    description: 'The sample sheet provided as input to the pipeline. Sample sheet contains sample name, paths to the input data files and associated metadata.'
   atlas:
     plot_type: 'table'
     section_name: 'Atlas Summary'
-    description: 'Summary of the cells and genes in the atlas.'
+    description: 'Summary of the cells and genes in the atlas. Atlas is used as a reference for deconvolution and cell type assignment.'
   atlas_ct:
     parent: 'atlas'
     plot_type: 'table'
     section_name: 'Atlas Cell Types'
-    description: 'Summary of the cell types in the atlas.'
+    description: 'Summary of the cell types in the atlas. Provides an overview of the diversity and abundance of cell types used as reference in deconvolution.'
   adata:
     plot_type: 'table'
     section_name: 'Input Summary'
@@ -34,12 +34,12 @@ custom_data:
     parent: 'deconvolved'
     plot_type: 'table'
     section_name: 'Output Cell Types'
-    description: 'Assigned cell types based on deconvolution / cell typing results. Unassigned counts appear in a nameless column.'
+    description: 'Assigned cell types based on deconvolution / cell typing results. Unassigned counts appear in a column without name.'
   deconvolved_probs:
     parent: 'deconvolved'
     plot_type: 'table'
     section_name: 'Cell Type Probabilities'
-    description: 'Average max cell type probabilities used to assign the cell types (greater is better).'
+    description: 'Average max cell type probabilities (fractions) used to assign the cell types. Greater values indicate more homogenous cell type assignments.'
 
 
 sp:
