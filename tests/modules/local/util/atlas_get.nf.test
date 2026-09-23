@@ -1,0 +1,55 @@
+nextflow_process {
+    name    "Test ATLAS_GET"
+    script  "modules/local/util/main.nf"
+    process "ATLAS_GET"
+
+    test("Should run ATLAS_GET successfully with local atlas") {
+
+        tag "process"
+        tag "atlas"
+        tag "util"
+
+        when {
+            params {
+                max_memory = '4.GB'
+                max_cpus   = 1
+            }
+            process {
+                """
+                input[0] = "${projectDir}/tests/data/atlas_small.h5ad"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.versions
+            assert process.out.atlas
+        }
+    }
+
+    test("Should run ATLAS_GET successfully with remote atlas") {
+
+        tag "process"
+        tag "atlas"
+        tag "util"
+
+        when {
+            params {
+                max_memory = '4.GB'
+                max_cpus   = 1
+            }
+            process {
+                """
+                input[0] = "https://github.com/break-through-cancer/staple/raw/main/tests/data/atlas_small.h5ad"
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.versions
+            assert process.out.atlas
+        }
+    }
+}

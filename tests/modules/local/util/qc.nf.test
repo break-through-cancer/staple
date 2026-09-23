@@ -1,0 +1,48 @@
+nextflow_process {
+    name    "Test QC"
+    script  "modules/local/util/main.nf"
+    process "QC"
+
+    setup {
+        run("CREATE_TEST_ADATA") {
+            script "tests/data/create_adata.nf"
+            params {
+                max_cpus = 2
+                max_memory = '4 GB'
+            }
+            process {
+            """
+            input[0] = 2
+            input[1] = true //with metadata
+            input[2] = ''  // create with any seeds
+            """
+            }
+        }
+    }
+
+    test("Should run QC successfully with test data") {
+
+        tag "process"
+        tag "qc"
+        tag "util"
+
+        when {
+            params {
+                max_memory = '4.GB'
+                max_cpus   = 1
+            }
+            
+            process {
+                """
+                input[0] = CREATE_TEST_ADATA.out.adata.map{ it -> [[id:"sample"], it[1], "atlas_input"] }
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.versions
+            assert path(process.out.report.get(0)).readLines().first().contains("Sample,n_genes,n_cells,mean_genes_by_counts,mean_cells_by_counts,mean_total_nnz_counts,mean_percent_mito")
+        }
+    }
+}

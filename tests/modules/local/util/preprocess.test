@@ -1,0 +1,48 @@
+nextflow_process {
+    name    "Test Preprocessing"
+    script  "modules/local/util/main.nf"
+    process "ADATA_PREPROCESS"
+
+    setup {
+        run("CREATE_TEST_ADATA") {
+            script "tests/data/create_adata.nf"
+            params {
+                max_cpus = 2
+                max_memory = '4 GB'
+            }
+            process {
+            """
+            input[0] = 2
+            input[1] = true //with metadata
+            input[2] = ''  // create with any seeds
+            """
+            }
+        }
+    }
+
+    test("Should run ADATA_PREPROCESS successfully with test data") {
+
+        tag "process"
+        tag "preprocess"
+        tag "util"
+
+        when {
+            params {
+                max_memory = '4.GB'
+                max_cpus   = 1
+                drop_genes_prefix = 'MT-'
+            }
+            
+            process {
+                """
+                input[0] = CREATE_TEST_ADATA.out.adata.map{ it -> [[id:"sample"], it[1]] }
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.versions
+        }
+    }
+}
