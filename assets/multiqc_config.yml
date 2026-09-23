@@ -34,7 +34,7 @@ custom_data:
     parent: 'deconvolved'
     plot_type: 'table'
     section_name: 'Output Cell Types'
-    description: 'Assigned cell types based on deconvolution / cell typing results. Unassigned counts appear in a column without name.'
+    description: 'Assigned cell types based on deconvolution / cell typing results. Unassigned counts appear in a column with no header.'
   deconvolved_probs:
     parent: 'deconvolved'
     plot_type: 'table'
