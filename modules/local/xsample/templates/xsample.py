@@ -14,6 +14,7 @@ import json
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.default_inference import DefaultInference
 from pydeseq2.ds import DeseqStats
+from importlib.metadata import version
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -459,11 +460,13 @@ def xsample_ttest(df, group1, group2):
 def versions():
     with open ("versions.yml", "w") as f:
         f.write(f"{process}:\\n")
-        f.write(f"    scipy: {sp.__version__}\\n")
-        f.write(f"    numpy: {np.__version__}\\n")
-        f.write(f"    anndata: {ad.__version__}\\n")
-        f.write(f"    pandas: {pd.__version__}\\n")
-        f.write(f"    json: {json.__version__}\\n")
+        f.write(f"    scipy: {version('scipy')}\\n")
+        f.write(f"    numpy: {version('numpy')}\\n")
+        f.write(f"    anndata: {version('anndata')}\\n")
+        f.write(f"    pandas: {version('pandas')}\\n")
+        f.write(f"    pydeseq2: {version('pydeseq2')}\\n")
+        f.write(f"    matplotlib: {version('matplotlib')}\\n")
+        f.write(f"    seaborn: {version('seaborn')}\\n")
 
 
 def get_vars(adatas, only=None):

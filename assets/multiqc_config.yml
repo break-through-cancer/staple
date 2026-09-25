@@ -14,34 +14,63 @@ custom_data:
     section_name: 'Sample Sheet'
     description: 'The sample sheet provided as input to the pipeline. Sample sheet contains sample name, paths to the input data files and associated metadata.'
   atlas:
+    parent_name: 'Input Data'
+    parent_id: 'inputs'
+    parent_description: 'Summaries of the input datasets.'
     plot_type: 'table'
-    section_name: 'Atlas Summary'
+    section_name: 'Reference Summary'
     description: 'Summary of the cells and genes in the atlas. Atlas is used as a reference for deconvolution and cell type assignment.'
   atlas_ct:
-    parent: 'atlas'
+    parent_name: 'Input Data'
+    parent_id: 'inputs'
+    parent_description: 'Summaries of the input datasets.'
     plot_type: 'table'
-    section_name: 'Atlas Cell Types'
+    section_name: 'Reference Cell Types'
     description: 'Summary of the cell types in the atlas. Provides an overview of the diversity and abundance of cell types used as reference in deconvolution.'
   adata:
+    parent_name: 'Input Data'
+    parent_id: 'inputs'
+    parent_description: 'Summaries of the input datasets.'
     plot_type: 'table'
     section_name: 'Input Summary'
     description: 'Summary of the AnnData object right after it was read.'
   deconvolved:
+    parent_name: 'Cell Typing'
+    parent_id: 'cell_types'
+    parent_description: 'Summaries of the cell typing results.'
     plot_type: 'table'
-    section_name: 'Output Summary'
+    section_name: 'Cell Type Counts'
     description: 'Summary of the AnnData object after deconvolution / cell typing.'
   deconvolved_ct:
-    parent: 'deconvolved'
+    parent_name: 'Cell Typing'
+    parent_id: 'cell_types'
+    parent_description: 'Summaries of the cell typing results.'
     plot_type: 'table'
-    section_name: 'Output Cell Types'
+    section_name: 'Cell Type Counts'
     description: 'Assigned cell types based on deconvolution / cell typing results. Unassigned counts appear in a column with no header.'
   deconvolved_probs:
-    parent: 'deconvolved'
+    parent_name: 'Cell Typing'
+    parent_id: 'cell_types'
+    parent_description: 'Summaries of the cell typing results.'
     plot_type: 'table'
     section_name: 'Cell Type Probabilities'
     description: 'Average max cell type probabilities (fractions) used to assign the cell types. Greater values indicate more homogenous cell type assignments.'
-
-
+  spatial_neighbors:
+    section_name: "Spatial Neighbors"
+    parent_id: "graph_stats"
+    parent_name: "Graph Stats"
+  degree_centrality:
+    section_name: "Degree Centrality"
+    parent_id: "graph_stats"
+    parent_name: "Graph Stats"
+  closeness_centrality:
+    section_name: "Closeness Centrality"
+    parent_id: "graph_stats"
+    parent_name: "Graph Stats"
+  average_clustering:
+    section_name: "Average Clustering"
+    parent_id: "graph_stats"
+    parent_name: "Graph Stats"
 sp:
   samplesheet:
     fn: 'samplesheet.valid.csv'
@@ -57,7 +86,19 @@ sp:
     fn: 'adata_counts_report.csv'
   deconvolved_probs:
     fn: 'cell_probs_report.csv'
+  spatial_neighbors:
+    fn: 'neighbors_mqc.json'
+  degree_centrality:
+    fn: 'centrality_degree_centrality_mqc.json'
+  closeness_centrality:
+    fn: 'centrality_closeness_centrality_mqc.json'
+  average_clustering:
+    fn: 'centrality_average_clustering_mqc.json'
 
+# reports that are made from contrasts are defined
+# in a separate config dynamically as we don't know
+# which contrasts will be available at runtime
+# see xsample module
 
 ignore_images: false
 export_plots: false
