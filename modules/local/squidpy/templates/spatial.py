@@ -4,6 +4,7 @@ import squidpy as sq
 import logging
 import os
 import numpy as np
+from importlib.metadata import version
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -152,7 +153,7 @@ adata.write_h5ad("squidpy.h5ad", compression="gzip")
 os.chdir(main_dir)
 with open("versions.yml", "w") as f:
     f.write("{}:\\n".format(process))
-    f.write("    squidpy: {}\\n".format(sq.__version__))
-    f.write("    anndata: {}\\n".format(ad.__version__))
-    f.write("    numpy: {}\\n".format(np.__version__))
+    f.write("    squidpy: {}\\n".format(version("squidpy")))
+    f.write("    anndata: {}\\n".format(version("anndata")))
+    f.write("    numpy: {}\\n".format(version("numpy")))
     f.write("    python: {}\\n".format(os.sys.version.split()[0]))

@@ -8,7 +8,7 @@ import os
 import pickle
 from matplotlib import pyplot as plt
 import numpy as np
-
+from importlib.metadata import version
 
 def default_ligrec(adata, par, **kwargs):
     if "gene_symbols" in kwargs:
@@ -156,6 +156,6 @@ if __name__ == "__main__":
     os.chdir(base_path)
     with open ("versions.yml", "w") as f:
         f.write("{}:\\n".format(process))
-        f.write("    squidpy: {}\\n".format(sq.__version__))
-        f.write("    anndata: {}\\n".format(ad.__version__))
-        f.write("    scanpy: {}\\n".format(sc.__version__))
+        f.write("    squidpy: {}\\n".format(version("squidpy")))
+        f.write("    anndata: {}\\n".format(version("anndata")))
+        f.write("    scanpy: {}\\n".format(version("scanpy")))
