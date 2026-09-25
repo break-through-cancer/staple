@@ -3,12 +3,8 @@
 import os
 import spatialdata_io as sd
 from spatialdata_io.experimental import to_legacy_anndata
-import squidpy as sq
-import pandas as pd
-import numpy as np
-import anndata as ad
-import scanpy as sc
 import logging
+from importlib.metadata import version
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -46,5 +42,5 @@ adata.write_h5ad(filename=outname)
 #versions
 with open("versions.yml", "w") as f:
     f.write("${task.process}:\\n")
-    f.write("    spatialdata_io: {}\\n".format(sd.__version__))
-    f.write("    squidpy: {}\\n".format(sq.__version__))
+    f.write("    spatialdata_io: {}\\n".format(version("spatialdata_io")))
+    f.write("    anndata: {}\\n".format(version("anndata")))
