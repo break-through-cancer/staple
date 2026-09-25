@@ -630,7 +630,6 @@ if __name__ == '__main__':
                 log.info("Generating differential neighbors report.")
                 res_mqc, res_csv = neighbors_report(adatas, spotlight=spotlight, ignore_self=False)
                 diff_res = diff_neighbors_report(res_csv, group1=group1, group2=group2)
-                save_reports(res_mqc, res_csv, f"neighbors_{var}", mqc_decimals=mqc_decimals)
 
                 #compose mqc report TODO move to a separate function for reusability
                 mqc_data = diff_res.reset_index()
