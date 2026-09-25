@@ -4,6 +4,7 @@ import os
 import anndata as ad
 import logging
 import pandas as pd
+from importlib.metadata import version
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -66,4 +67,5 @@ if __name__ == "__main__":
     #versions
     with open("versions.yml", "w") as f:
         f.write("${task.process}:\\n")
-        f.write("    anndata: {}\\n".format(ad.__version__))
+        f.write("    anndata: {}\\n".format(version("anndata")))
+        f.write("    pandas: {}\\n".format(version("pandas")))
