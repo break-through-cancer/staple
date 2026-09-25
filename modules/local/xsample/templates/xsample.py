@@ -464,8 +464,9 @@ def versions():
         f.write(f"    numpy: {version('numpy')}\\n")
         f.write(f"    anndata: {version('anndata')}\\n")
         f.write(f"    pandas: {version('pandas')}\\n")
-        f.write(f"    json: {version('json')}\\n")
         f.write(f"    pydeseq2: {version('pydeseq2')}\\n")
+        f.write(f"    matplotlib: {version('matplotlib')}\\n")
+        f.write(f"    seaborn: {version('seaborn')}\\n")
 
 
 def get_vars(adatas, only=None):
