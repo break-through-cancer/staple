@@ -1,8 +1,8 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/btc/spatial/master/nextflow_schema.json",
-    "title": "btc/spatial pipeline parameters",
-    "description": "BTC spatial pipeline",
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/break-through-cancer/STAPLE/master/nextflow_schema.json",
+    "title": "break-through-cancer/STAPLE pipeline parameters",
+    "description": "BTC STAPLE pipeline",
     "type": "object",
     "definitions": {
         "input_output_options": {
@@ -385,7 +385,7 @@
         },
         "na_as_value": {
             "type": "string",
-            "default": "NA"
+            "default": true
         },
         "use_ligand_receptor_genes": {
             "type": "boolean",
@@ -407,6 +407,19 @@
             "type": "integer",
             "default": 100,
             "description": "min UMI counts, passed to RCTD UMI_min parameter"
+        },
+        "xenium": {
+            "type": "string"
+        },
+        "visium": {
+            "type": "string"
+        },
+        "anndata": {
+            "type": "string"
+        },
+        "sq_gr_co_occurrence_interval": {
+            "type": "integer",
+            "default": 50
         }
     }
 }

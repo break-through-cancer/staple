@@ -3,6 +3,7 @@
 # Input is a space-delimited string with adatas
 
 import os
+import re
 import logging
 import pandas as pd
 import scipy as sp
@@ -507,8 +508,19 @@ def get_vars(adatas, only=None):
 
     return res
 
-def save_reports(mqc, res, name, mqc_reports="reports/mqc", reports="reports"):
+def trunc_mqc_decimals(mqc, keep=4):
+    # Truncate the decimal places of all numeric values in the 'data' field of the mqc 
+    # dictionary to the specified number of decimals.
+    st = json.dumps(mqc['data'])
+    st = re.sub(r'([0-9]+[.][0-9]+)', lambda m: f"{float(m.group(1)):.{keep}f}", st)
+    mqc['data'] = json.loads(st)
+
+    return mqc
+
+def save_reports(mqc, res, name, mqc_reports="reports/mqc", reports="reports", mqc_decimals=4):
     if mqc is not None:
+        if mqc_decimals is not None:
+            mqc = trunc_mqc_decimals(mqc, mqc_decimals)
         with open(f"{mqc_reports}/{name}_mqc.json","w") as f:
             json.dump(mqc, f, indent=4)
     if res is not None:
@@ -528,6 +540,7 @@ if __name__ == '__main__':
     spotlight = "${params.analyze.spotlight}"            # a comma-separated string of cell type pairs to spotlight
     if spotlight:
         spotlight = [s.strip() for s in spotlight.split(',')]
+    mqc_decimals = int("${params.analyze.mqc_decimals}")
 
     adata_paths = collected.split(" ")
     adatas = [ad.read_h5ad(path, backed="r") for path in adata_paths]
@@ -542,7 +555,7 @@ if __name__ == '__main__':
     try:
         log.info("Generating neighbors report.")
         neigh_mqc, neigh_csv = neighbors_report(adatas, spotlight=spotlight, ignore_self=ignore_self)
-        save_reports(neigh_mqc, neigh_csv, "neighbors")
+        save_reports(neigh_mqc, neigh_csv, "neighbors", mqc_decimals=mqc_decimals)
     except Exception as e:
         log.warning(f"Could not generate neighbors report: {e}")
 
@@ -551,7 +564,7 @@ if __name__ == '__main__':
         log.info("Generating centrality report.")
         centrality = centrality_reports(adatas, spotlight=spotlight)
         for score, report in centrality.items():
-            save_reports(report[0], report[1], f"centrality_{score}")
+            save_reports(report[0], report[1], f"centrality_{score}", mqc_decimals=mqc_decimals)
     except Exception as e:
         log.warning(f"Could not generate centrality report: {e}")
 
@@ -596,12 +609,12 @@ if __name__ == '__main__':
             try:
                 res_mqc, res = heatmap_report(adatas, spotlight=spotlight, show=show,
                                               tool=r, filter=filter, only_spatial=only_spatial)
-                save_reports(res_mqc, res, f"{r}")
+                save_reports(res_mqc, res, f"{r}", mqc_decimals=mqc_decimals)
             except Exception as e:
                 log.warning(f"Could not generate overall report for {r}: {e}")
         try:
             co_occ_mqc, co_occ_csv = co_occurrence_report(adatas, spotlight=spotlight)
-            save_reports(co_occ_mqc, co_occ_csv, "co_occurrence")
+            save_reports(co_occ_mqc, co_occ_csv, "co_occurrence", mqc_decimals=mqc_decimals)
         except Exception as e:
             log.warning(f"Could not generate overall co-occurrence report: {e}")
 
@@ -640,7 +653,7 @@ if __name__ == '__main__':
                     },
                     "data": mqc_data.to_dict()
                 }
-                save_reports(diff_mqc, diff_res, f"neighbors_by_{var}")
+                save_reports(diff_mqc, diff_res, f"neighbors_by_{var}", mqc_decimals=mqc_decimals)
             except Exception as e:
                 log.warning(f"Could not generate neighbors report for variable {var}: {e}")
             
@@ -652,7 +665,7 @@ if __name__ == '__main__':
                                                   tool=r, filter=filter,
                                                   only_spatial=only_spatial,
                                                   var=var)
-                    save_reports(res_mqc, res, f"{r}_by_{var}")
+                    save_reports(res_mqc, res, f"{r}_by_{var}", mqc_decimals=mqc_decimals)
                 except Exception as e:
                     log.warning(f"Could not generate {r} report for variable {var}: {e}")
 
@@ -661,7 +674,7 @@ if __name__ == '__main__':
                 log.info("Generating differential centrality reports.")
                 centrality_reports_res = centrality_reports(adatas, spotlight=spotlight, groups=[group1, group2])
                 for score, report in centrality_reports_res.items():
-                    save_reports(report[0], report[1], f"centrality_{score}_by_{var}")
+                    save_reports(report[0], report[1], f"centrality_{score}_by_{var}", mqc_decimals=mqc_decimals)
             except Exception as e:
                 log.warning(f"Could not generate centrality report for variable {var}: {e}")
 
@@ -696,8 +709,7 @@ if __name__ == '__main__':
                 else:
                     add_memo = None
                 mqc_report = de_report(de_results, spotlight=spotlight, filter=filter, show=show, contrast=contrasts, add_memo=add_memo)
-                save_reports(mqc_report, None, f"deseq2_by_{var}",
-                                mqc_reports_dir, reports_dir)
+                save_reports(mqc_report, None, f"deseq2_by_{var}", mqc_decimals=mqc_decimals)
             except Exception as e:
                 log.warning(f"Could not perform DESeq2 analysis for variable {var}: {e}")
 
@@ -738,7 +750,7 @@ if __name__ == '__main__':
                     },
                     "data": reports
                 }
-                save_reports(mqc_report, co_occ_csv, f"co_occurrence_by_{var}", mqc_reports_dir, reports_dir)
+                save_reports(mqc_report, co_occ_csv, f"co_occurrence_by_{var}", mqc_decimals=mqc_decimals)
             except Exception as e:
                 log.warning(f"Could not generate co-occurrence report for variable {var}: {e}")
 

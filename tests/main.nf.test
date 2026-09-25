@@ -37,7 +37,7 @@ nextflow_pipeline {
 
     }
 
-        test("Fail on empty samplesheet") {
+    test("Fail on empty samplesheet") {
 
         tag "samplesheet"
         tag "pipeline"
@@ -200,7 +200,6 @@ nextflow_pipeline {
 
     }
 
-
     test("RCTD full pipeline on Visium HD with remote ref") {
 
         tag "visiumhd"
@@ -280,8 +279,6 @@ nextflow_pipeline {
             )
         }
     }
-
-    
 
     test("Visium SD with external deconvolution") {
 
