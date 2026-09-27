@@ -106,6 +106,7 @@ def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, t
 
     res_show = res[samples][:show]
     res_dict = res_show.to_dict()
+    res_dict = dict(sorted(res_dict.items(), key=lambda item: item[0]))
     if var:
         id = f"{tool}_by_{var}"
     else:
