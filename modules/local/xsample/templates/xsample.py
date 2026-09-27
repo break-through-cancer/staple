@@ -84,21 +84,21 @@ def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, t
             else idx for idx in ligrecs_ttest.index]
 
         if(len(ligrecs_ttest_sig) == 0):
-            log.warning(f"No significant differential interactions found for {tool}.")
+            log.warning(f"No significant differential scores found for {tool}.")
         else:
             log.info(f"{len(ligrecs_ttest_sig)} significant differential \
-                interactions found for {tool} with p_adj<={filter}.")
+                scores found for {tool} with p_adj<={filter}.")
 
         res = ligrecs_ttest.sort_values('pval', ascending=True)
-        memo = f"Top {show} differential interactions across samples. There are \
+        memo = f"Top {show} differential scores across samples. There are \
                 {len(ligrecs_ttest_sig['pval_adj'])} significant differential \
-                interactions (p_adj<={filter}) found between \
+                scores (p_adj<={filter}) found between \
                 {groups[0]} and {groups[1]}, marked with *."
 
     else:
         ligrecs['mean'] = ligrecs.mean(axis=1)
         res = ligrecs.sort_values('mean', ascending=False)
-        memo = f"Top {show} mean interactions across samples shown as no groups \
+        memo = f"Top {show} mean scores across samples shown as no groups \
                  were specified in the sample sheet."
 
     if tool == 'squidpy_ligrec' and only_spatial:
@@ -738,7 +738,7 @@ if __name__ == '__main__':
                         for k in report_dict.keys()
                     }
                     reports.append(z_diff_report)
-                memo = f"Median difference of co-occurrence across groups of variable {var} ({groups[0]} - {groups[1]})."
+                memo = f"Median difference of co-occurrence across groups by variable {var} ({groups[0]} - {groups[1]}). The plot is organized by focal cell type and displays differences in co-occurrence of each other cell type with the focal cell type at each of the observed intervals."
                 if spotlight:
                     memo += f" Spotlight mode on {spotlight}"
                 mqc_report = {
