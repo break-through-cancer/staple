@@ -3,6 +3,7 @@ import anndata as ad
 import pandas as pd
 import os
 import logging
+from importlib.metadata import version
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -43,7 +44,7 @@ adata.write_h5ad(f"{sample}/{out_name}.h5ad", compression='gzip')
 #versions
 with open("versions.yml", "w") as f:
     f.write("${task.process}:\\n")
-    f.write("    anndata: {}\\n".format(ad.__version__))
-    f.write("    pandas: {}\\n".format(pd.__version__))
+    f.write("    anndata: {}\\n".format(version("anndata")))
+    f.write("    pandas: {}\\n".format(version("pandas")))
 
 
