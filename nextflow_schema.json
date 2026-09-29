@@ -263,7 +263,7 @@
                 },
                 "xsample": {
                     "type": "boolean",
-                    "default": false
+                    "default": true
                 },
                 "spotlight": {
                     "type": "string",
