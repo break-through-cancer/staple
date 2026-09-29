@@ -16,6 +16,7 @@ macOS 26.3.1 (a)
 Cirro web platform (https://cirro.bio/)
 slurm 23.11.6
 github Ubuntu runners
+Seqera (https://seqera.io/)
 ```
 
 ## Just trying
@@ -104,11 +105,35 @@ Run on Visium SD or HD with matched reference specified in the samplesheet and a
 nextflow run break-through-cancer/staple \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
-   --ref_scrna_type_col cell_type_column_name
+   --ref_scrna_type_col <cell_type_column_name>
 ```
 
-Pick a non-default reference-free deconvolution and ligand-receptor interaction tools:
+Run on Xenium:
+```bash
+nextflow run break-through-cancer/staple \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --xenium
+```
 
+Run on a set of Anndata inputs:
+```bash
+nextflow run break-through-cancer/staple \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --anndata \
+```
+
+Run on a set of Anndata inputs without deconvolution (`adata.obs['cell_type']` is must be present):
+```bash
+nextflow run break-through-cancer/staple \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --anndata \
+   --deconvolve.skip
+```
+
+Pick non-default reference-free deconvolution and ligand-receptor interaction tools:
 ```bash
 nextflow run break-through-cancer/staple \
    -profile <docker/singularity/.../institute> \
@@ -119,7 +144,7 @@ nextflow run break-through-cancer/staple \
 
 Control squidpy [ligand-receptor interaction](https://squidpy.readthedocs.io/en/stable/notebooks/examples/graph/compute_ligrec.html) parameters:
 
-Run in mouse data (or any other organism via ortholog conversion):
+Run on mouse data (or any other organism via ortholog conversion):
 ```bash
 --sq_gr_ligrec_interactions_params '{"organism":"10090"}'
 ```
