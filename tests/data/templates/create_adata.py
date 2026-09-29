@@ -29,7 +29,7 @@ def make_one_adata(n=25, m=1000, pct_mito=0.1, sample_id='sample', with_metadata
                 'tissue_hires_scalef': 1.0,
                 'spot_diameter_fullres': 1.0
             },
-            'images': {}
+            'images': {'hires': np.random.rand(50, 50, 3)}
         }
     }
     sq.gr.spatial_neighbors(adata, spatial_key='spatial')
@@ -139,8 +139,17 @@ if __name__ == "__main__":
         seeds = None
     else:
         seeds = [int(seed) for seed in seeds]
-    #compose adatas and write to disk
+
+    # compose adatas
     adatas = make_many_adata(num_adatas=int(num_adatas), n=25, m=1000,
                              pct_mito=0.1, with_metadata=with_metadata, seeds=seeds)
-    for i, adata in enumerate(adatas):
-        adata.write_h5ad(f'{i}_adata.h5ad')
+
+    # compose samplesheet from added metadata fields
+    samplesheet = pd.DataFrame([adata.obs.iloc[0] for adata in adatas])
+    samplesheet['sample'] = [adata.obs['id'].iloc[0] for adata in adatas]
+    samplesheet['data_directory'] = [f'{adata.obs["id"].iloc[0]}_adata.h5ad' for adata in adatas]
+    samplesheet['expression_profile'] = ''
+    samplesheet[['sample','response', 'data_directory', 'expression_profile', 'age']].to_csv("samplesheet.csv", index=False)
+
+    # save adatas
+    [adata.write_h5ad(f'{adata.obs["id"].iloc[0]}_adata.h5ad') for adata in adatas]
