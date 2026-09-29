@@ -152,4 +152,4 @@ if __name__ == "__main__":
     samplesheet[['sample','response', 'data_directory', 'expression_profile', 'age']].to_csv("samplesheet.csv", index=False)
 
     # save adatas
-    [adata.write_h5ad(f'{adata.obs["id"].iloc[0]}_adata.h5ad') for adata in adatas]
+    [adata.write_h5ad(f'{adata.obs["id"].iloc[0]}_adata.h5ad', compression='gzip') for adata in adatas]
