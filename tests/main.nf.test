@@ -57,6 +57,38 @@ nextflow_pipeline {
 
     }
 
+    test("Full pipeline on Anndata inputs and skip deconvolve") {
+        tag "pipeline"
+        tag "skip"
+
+    when {
+            params {
+                input = "../../../tests/data/samplesheets/skip-deconvolve-test.csv"
+                anndata = true
+                deconvolve {
+                    external = false
+                    bayestme = false
+                    cogaps   = false
+                    rctd     = false
+                    skip     = true
+                }
+                analyze {
+                    spacemarkers = false
+                    squidpy = false
+                    xsample = true
+                }
+                outdir = "output"
+                max_memory = "4.GB"
+                max_cpus = 2
+            }
+        }
+        then {
+            assertAll (
+                { assert workflow.success }
+            )
+        }
+    }
+
     test("RCTD on Visium SD with local ref") {
 
         tag "local"
