@@ -246,6 +246,10 @@
                 "external": {
                     "type": "boolean",
                     "default": false
+                },
+                "skip": {
+                    "type": "boolean",
+                    "default": false
                 }
             }
         },
