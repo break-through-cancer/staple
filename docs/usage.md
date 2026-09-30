@@ -121,7 +121,7 @@ Run on a set of Anndata inputs:
 nextflow run break-through-cancer/staple \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
-   --anndata \
+   --anndata
 ```
 
 Run on a set of Anndata inputs without deconvolution (`adata.obs['cell_type']` is must be present):
