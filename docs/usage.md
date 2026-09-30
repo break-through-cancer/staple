@@ -124,7 +124,7 @@ nextflow run break-through-cancer/staple \
    --anndata
 ```
 
-Run on a set of Anndata inputs without deconvolution (`adata.obs['cell_type']` is must be present):
+Run on a set of Anndata inputs without deconvolution (`adata.obs['cell_type']` must be present):
 ```bash
 nextflow run break-through-cancer/staple \
    -profile <docker/singularity/.../institute> \
