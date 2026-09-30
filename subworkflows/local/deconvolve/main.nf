@@ -17,27 +17,33 @@ workflow DECONVOLVE {
     versions = channel.empty()
     ch_deconvolved = channel.empty()  //outputs: meta, optional cell type probs, optional deconvolution object
 
+    // Skip deconvolution and work with existing cell types
+    // cell_type column expected as per cellXgene specification
+    if (params.deconvolve.skip) {
+        ch_deconvolved = ch_deconvolved.mix(ch_adata.map { it -> [meta:it[0], cell_probs:null, obj:it[1]] })
+    }
+
     // Grab external deconvolution results
     // CODA annotation channel - or any other external csv annotaion
-        if (params.deconvolve.external){
-            ch_external = ch_datasets.map { it -> tuple(it.meta, it.data_directory) }
-                .flatMap { item -> 
-                    def meta = item[0]
-                    def data_path = item[1]
-                    def coda_files = []
-                    data_path.eachFileRecurse { file ->
-                        if (file.name.endsWith('cellular_compositions.csv')) {
-                            coda_files.add(file)
-                        }
+    if (params.deconvolve.external){
+        ch_external = ch_datasets.map { it -> tuple(it.meta, it.data_directory) }
+            .flatMap { item -> 
+                def meta = item[0]
+                def data_path = item[1]
+                def coda_files = []
+                data_path.eachFileRecurse { file ->
+                    if (file.name.endsWith('cellular_compositions.csv')) {
+                        coda_files.add(file)
                     }
-                    coda_files.collect { file -> [meta, file] }
                 }
-            //join external cell probs to adata
-            ch_cell_probs_input = ch_external.join( ch_adata ).map { it -> tuple(it[0], it[1], it[2], "external") }
-            EXTERNAL_PROBS(ch_cell_probs_input)
-            ch_deconvolved = ch_deconvolved.mix(ch_external.join(EXTERNAL_PROBS.out.adata)
-                .map { it -> [meta:it[0], cell_probs:it[1], obj:it[2]] })
-        }
+                coda_files.collect { file -> [meta, file] }
+            }
+        //join external cell probs to adata
+        ch_cell_probs_input = ch_external.join( ch_adata ).map { it -> tuple(it[0], it[1], it[2], "external") }
+        EXTERNAL_PROBS(ch_cell_probs_input)
+        ch_deconvolved = ch_deconvolved.mix(ch_external.join(EXTERNAL_PROBS.out.adata)
+            .map { it -> [meta:it[0], cell_probs:it[1], obj:it[2]] })
+    }
 
     // BayestME deconvolution and plots, run only if not hd as the tool does not support it
     if(!params.visium_hd && params.deconvolve.bayestme) {

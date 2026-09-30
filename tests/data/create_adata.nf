@@ -9,7 +9,8 @@ process CREATE_TEST_ADATA {
         val seeds
 
     output:
-        path "*adata.h5ad", emit: adata
+        path "*adata.h5ad",     emit: adata
+        path "samplesheet.csv", emit: samplesheet
 
     script:
     template 'create_adata.py'

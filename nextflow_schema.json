@@ -246,6 +246,10 @@
                 "external": {
                     "type": "boolean",
                     "default": false
+                },
+                "skip": {
+                    "type": "boolean",
+                    "default": false
                 }
             }
         },
@@ -263,7 +267,7 @@
                 },
                 "xsample": {
                     "type": "boolean",
-                    "default": false
+                    "default": true
                 },
                 "spotlight": {
                     "type": "string",
@@ -272,7 +276,7 @@
                 },
                 "show_top": {
                     "type": "integer",
-                    "default": 100,
+                    "default": 50,
                     "description": "Number of top items to show in the final reports"
                 },
                 "filter": {
