@@ -272,7 +272,7 @@
                 },
                 "show_top": {
                     "type": "integer",
-                    "default": 100,
+                    "default": 50,
                     "description": "Number of top items to show in the final reports"
                 },
                 "filter": {
