@@ -95,7 +95,7 @@ def samplesheet_from_files(ds):
     files['data_directory'] = files['file'].apply(lambda x: str(Path(x).parent).replace('s3:/', 's3://'))
     files = files[['sample','data_directory']]
 
-    samplesheet = pd.merge(ds.samplesheet, files, on='sample', how='left', suffixes=('', '_drop'))
+    samplesheet = pd.merge(ds.samplesheet, files, on='sample', how='left', suffixes=('_drop', ''))
     # Drop any columns that were suffixed with '_drop' due to merge conflicts
     if any(col.endswith('_drop') for col in samplesheet.columns):
         drops = [col.replace('_drop', '') for col in samplesheet.columns if col.endswith('_drop')]
