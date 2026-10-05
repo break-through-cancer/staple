@@ -54,8 +54,10 @@ def prepare_samplesheet(ds: PreprocessDataset) -> pd.DataFrame:
         if samplesheet.empty:
             raise ValueError("No files found in dataset and unable to prepare samplesheet from params.")
         ds.logger.info("Prepared samplesheet from params.")
-    
+        
+
     # Ensure all required columns are present (populate missing)
+    ds.logger.info(f"Columns present in samplesheet: {samplesheet.columns.tolist()}")
     for colname in SAMPLESHEET_REQUIRED_COLUMNS:
         if colname not in samplesheet.columns:
             ds.logger.warning(f"Samplesheet is missing required column '{colname}'. Populating with NaN.")
@@ -93,8 +95,12 @@ def samplesheet_from_files(ds):
     files['data_directory'] = files['file'].apply(lambda x: str(Path(x).parent).replace('s3:/', 's3://'))
     files = files[['sample','data_directory']]
 
-    samplesheet = pd.merge(ds.samplesheet, files, on='sample', how='left')
-    
+    samplesheet = pd.merge(ds.samplesheet, files, on='sample', how='left', suffixes=('', '_drop'))
+    # Drop any columns that were suffixed with '_drop' due to merge conflicts
+    if any(col.endswith('_drop') for col in samplesheet.columns):
+        drops = [col.replace('_drop', '') for col in samplesheet.columns if col.endswith('_drop')]
+        ds.logger.warning(f"Dropping duplicate columns with conflicts: {drops}.")
+        samplesheet = samplesheet.loc[:, ~samplesheet.columns.str.endswith('_drop')]
 
     return samplesheet
 
