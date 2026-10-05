@@ -29,6 +29,11 @@
                         "type": "integer",
                         "title": "Number of Top Genes (by var) to keep - use lower number for faster runtime",
                         "default": 99999
+                    },
+                    "drop_prefix":{
+                        "type": "string",
+                        "title": "Prefix to drop from gene names. Can be comma-separated for multiple prefixes",
+                        "default": ""
                     }
                 }
             },

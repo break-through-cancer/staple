@@ -1,8 +1,11 @@
 {
     "cirro_input": "$.inputs",
     "outdir": "$.dataset.dataPath|/",
-    "deconvolve": {
+    "preprocess":{
         "n_top_genes": "$.dataset.params.preprocessing.n_top_genes",
+        "drop_prefix": "$.dataset.params.preprocessing.drop_prefix"
+    },
+    "deconvolve": {
         "cogaps": "$.dataset.params.deconvolution.run_cogaps",
         "bayestme": "$.dataset.params.deconvolution.run_bayestme",
         "rctd": "$.dataset.params.ref_deconvolution.run_rctd",
