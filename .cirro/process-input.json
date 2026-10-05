@@ -1,6 +1,7 @@
 {
     "cirro_input": "$.inputs",
     "outdir": "$.dataset.dataPath|/",
+    "drop_genes_prefix": "$.dataset.params.preprocessing.drop_prefix",
     "deconvolve": {
         "n_top_genes": "$.dataset.params.preprocessing.n_top_genes",
         "cogaps": "$.dataset.params.deconvolution.run_cogaps",
@@ -14,6 +15,9 @@
         "xsample": "$.dataset.params.xsample.run_xsample",
         "spotlight": "$.dataset.params.xsample.spotlight"
     },
+    "sq_gr_ligrec_interactions_params": "$.dataset.params.spatial.sq_gr_ligrec_interactions_params",
+    "sq_gr_co_occurrence_interval": "$.dataset.params.spatial.sq_gr_co_occurrence_interval",
+    "na_as_value": "$.dataset.params.spatial.na_as_value",
     "n_cell_types": "$.dataset.params.deconvolution.n_cell_types",
     "ref_scrna": "$.dataset.params.ref_deconvolution.reference_scrna",
     "ref_scrna_type_col": "$.dataset.params.ref_deconvolution.type_col_scrna",
