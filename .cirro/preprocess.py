@@ -92,7 +92,7 @@ def samplesheet_from_files(ds):
     # Assumes samplesheet associates sample with a file in the sample's root directory
     # Convert s3 link to PosixPath and derive parent; convert back into string
     # Path converts s3:// to s3:/, so revert proper s3 prefix afterwards
-    files['data_directory'] = files['file'].apply(lambda x: str(Path(x).parent).replace('s3:/', 's3://'))
+    files['data_directory'] = files['file'].apply(lambda x: str(Path(x)).replace('s3:/', 's3://'))
     files = files[['sample','data_directory']]
 
     samplesheet = pd.merge(ds.samplesheet, files, on='sample', how='left', suffixes=('_drop', ''))
