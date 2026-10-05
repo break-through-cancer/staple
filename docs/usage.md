@@ -158,12 +158,12 @@ If you wish to share such profile (such as upload as supplementary material for 
 There is a number of arguments that may be passed to the pipeline to control its behavior and configuration. The list of all arguments is available in the `nextflow.config` or the nextflow_schema.json files, below we list the ones that we think are most relevant for typical usage.
 
 #### Input format selection
-Use `--<visiumsd|visiumhd|xenium|anndata>` depending on the format of your input data. In case of `anndata`, provide paths to `.h5ad` files, otherwise provide paths to the appropriate raw data directories for the selected technology. If using `--visiumhd`, it's possible to select the associated resolution, i.e. `--visiumhd.square_008um`.
+Use `--visium`, `--visium_hd <table>`, `--xenium`, or `--anndata` depending on the format of your input data. For `anndata`, provide paths to `.h5ad` files; otherwise provide paths to the appropriate raw data directories. For Visium HD, select the associated table with, for example, `--visium_hd square_008um`.
 
 #### Deconvolution / cell typing
 RCTD drops cells/bins with less than 100 UMIs. Control that with `--umi_min <number>`. Setting this parameter to a lower value will include more cells/bins with fewer UMIs, while setting it to a higher value will be more stringent.
 
-Use `--n_top_genes <number>` to control the number of top genes considered for deconvolution/cell typing. The default is 99999 to include all genes (allows to type more cells), but setting it to a lower value can speed up computation and reduce memory usage.
+Use `--deconvolve.n_top_genes <number>` to control the number of top genes considered for deconvolution/cell typing. The default is 99999; setting it to a lower value can speed up computation and reduce memory usage.
 
 #### Squidpy
 Squidpy provides a lot of controls over database options for ligand-receptor analysis. Use `sq_gr_ligrec_interactions_params` to pass a JSON string with the desired parameters, for example: ` '{"resources": "CellPhoneDB"}'` to select only CellPhoneDB as the resource, or `'{"organism":"10090"}'` to select mouse instead of human.
@@ -171,7 +171,7 @@ Squidpy provides a lot of controls over database options for ligand-receptor ana
 The default way to estimate cell type co-occurrences is to split the whole slide into 50 bins. Change this, for example by using defined intervals like this: `sq_gr_co_occurrence_interval = '100,200,300'` or any other comma-separated list of bin sizes, or split in e.g. 10 bins instead: `sq_gr_co_occurrence_interval = 10`.
 
 #### Cross-sample analysis
-STAPLE performs cross-sample contrasts whenever there are metadata variables provided in the samplesheet. Make sure to include relevant metadata columns in your samplesheet to enable meaningful cross-sample analysis. When performing such analysis, multiple testing correction is applied to control for false discoveries, but given the combination of many tests and potentially small sample sizes, the effects can get masked. Use `--analyze.spotlight` to specify which cell types to focus on in the cross-sample analysis, this reduces the number of tests and can help highlight significant effects. Example `--analyze.spotlight tumor`. Naturally, `'tumor'` should be a valid cell type present in your data.
+STAPLE performs cross-sample contrasts for metadata variables that are categorical and have exactly two observed levels across samples. Make sure to include relevant metadata columns in your samplesheet to enable meaningful cross-sample analysis. When performing such analysis, multiple testing correction is applied to control for false discoveries, but given the combination of many tests and potentially small sample sizes, the effects can get masked. Use `--analyze.spotlight` to specify which cell types to focus on in the cross-sample analysis, this reduces the number of tests and can help highlight significant effects. Example `--analyze.spotlight tumor`. Naturally, `'tumor'` should be a valid cell type present in your data.
 
 Control how many top features are shown in the cross-sample analysis using the `--analyze.show_top` parameter. The default is 50. This affects only display and does not change the underlying data files produced and stored in `staple/reports/`.
 

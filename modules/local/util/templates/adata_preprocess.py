@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     #parse drop prefix in case some provided
     if drop_prefix:
-        drop_prefix = tuple(drop_prefix.split(","))
+        drop_prefix = tuple(prefix.strip() for prefix in drop_prefix.split(",") if prefix.strip())
 
     #output directory
     os.makedirs(sample, exist_ok=True)
