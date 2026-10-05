@@ -555,18 +555,18 @@ if __name__ == '__main__':
     mqc_reports_dir = "reports/mqc"
     os.makedirs(mqc_reports_dir, exist_ok=True)
 
-    # generate neighbors report
+    # generate neighbors report - do not apply splotlight for generic reports
     try:
         log.info("Generating neighbors report.")
-        neigh_mqc, neigh_csv = neighbors_report(adatas, spotlight=spotlight, ignore_self=ignore_self)
+        neigh_mqc, neigh_csv = neighbors_report(adatas, spotlight=None, ignore_self=ignore_self)
         save_reports(neigh_mqc, neigh_csv, "neighbors", mqc_decimals=mqc_decimals)
     except Exception as e:
         log.warning(f"Could not generate neighbors report: {e}")
 
-    # generate centrality report - separately
+    # generate centrality report - separately, do not apply spotlight for generic reports
     try:
         log.info("Generating centrality report.")
-        centrality = centrality_reports(adatas, spotlight=spotlight)
+        centrality = centrality_reports(adatas, spotlight=None)
         for score, report in centrality.items():
             save_reports(report[0], report[1], f"centrality_{score}", mqc_decimals=mqc_decimals)
     except Exception as e:
