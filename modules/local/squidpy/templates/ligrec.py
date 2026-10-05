@@ -10,7 +10,6 @@ from matplotlib import pyplot as plt
 import numpy as np
 from importlib.metadata import version
 
-
 def default_ligrec(adata, par, **kwargs):
     if "gene_symbols" in kwargs:
         gene_symbols = kwargs.pop("gene_symbols")
