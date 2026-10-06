@@ -42,9 +42,13 @@ workflow ANALYZE {
     // wrap up - collect results from tools and save
     // TODO: rewrite to collect ligrecs and join once
     if (params.analyze.squidpy){
-        // if squidpy not run, just pass input adata along
-        STAPLE_ATTACH_LIGREC(SQUIDPY_SPATIAL.out.adata.join(ligrec))
-        attach_imscores_to = STAPLE_ATTACH_LIGREC.out.adata
+        // remainder: keep samples whose ligrec output is missing (optional output / failed ignored)
+        ch_with_ligrec = SQUIDPY_SPATIAL.out.adata.join(ligrec, remainder: true)
+        STAPLE_ATTACH_LIGREC(ch_with_ligrec.filter { it[2] != null })
+        // samples without ligrec pass through unchanged
+        attach_imscores_to = STAPLE_ATTACH_LIGREC.out.adata.mix(
+            ch_with_ligrec.filter { it-> it[2] == null }.map { meta, ad, _lr -> [meta, ad] }
+        )
         adata = attach_imscores_to
     } else {
         attach_imscores_to = SQUIDPY_SPATIAL.out.adata
@@ -53,13 +57,18 @@ workflow ANALYZE {
 
 
     if (params.analyze.spacemarkers){
-        STAPLE_ATTACH_IMSCORES(attach_imscores_to.join(imscores))
-        attach_lrscores_to = STAPLE_ATTACH_IMSCORES.out.adata
+        ch_with_im = attach_imscores_to.join(imscores, remainder: true)
+        STAPLE_ATTACH_IMSCORES(ch_with_im.filter { it[2] != null })
+        attach_lrscores_to = STAPLE_ATTACH_IMSCORES.out.adata.mix(
+            ch_with_im.filter { it -> it[2] == null }.map { meta, ad, _im -> [meta, ad] }
+        )
         adata = attach_lrscores_to
         if (params.visium_hd){
-            // in Visium HD, some spots have no reads, so make sure to keep all spots
-            STAPLE_ATTACH_LRSCORES(attach_lrscores_to.join(lrscores))
-            adata = STAPLE_ATTACH_LRSCORES.out.adata
+            ch_with_lr = attach_lrscores_to.join(lrscores, remainder: true)
+            STAPLE_ATTACH_LRSCORES(ch_with_lr.filter { it -> it[2] != null })
+            adata = STAPLE_ATTACH_LRSCORES.out.adata.mix(
+                ch_with_lr.filter { it -> it[2] == null }.map { meta, ad, _lr -> [meta, ad] }
+            )
         }
     }
 
