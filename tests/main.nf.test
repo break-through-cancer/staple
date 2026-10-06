@@ -84,7 +84,15 @@ nextflow_pipeline {
         }
         then {
             assertAll (
-                { assert workflow.success }
+                { assert workflow.success
+                  assert file("${outputDir}/multiqc/multiqc_report.html").exists()
+                  assert file("${outputDir}/squidpy").exists()
+                  assert file("${outputDir}/staple").exists()
+                  assert !file("${outputDir}/rctd").exists()
+                  assert !file("${outputDir}/cogaps").exists()
+                  assert !file("${outputDir}/external").exists()
+                  assert !file("${outputDir}/bayestme").exists()
+                }
             )
         }
     }
@@ -115,7 +123,7 @@ nextflow_pipeline {
 
         then {
             assertAll { 
-                assert workflow.success 
+                assert workflow.success
             }
 
 
