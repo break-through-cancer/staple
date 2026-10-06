@@ -37,57 +37,73 @@
                     }
                 }
             },
-            "skip": {
+            "deconvolution": {
+                "title": "Deconvolution / Cell Typing",
+                "type": "object",
+                "properties": {
+                    "skip": {
                         "type": "boolean",
                         "title": "Skip Deconvolution / Cell Typing",
-                        "description": "Rely on cell_type column in the input Anndata."
-                    },
-            "ref_deconvolution":{
-                "title": "Reference-based deconvolution options",
-                "type": "object",
-                "properties": {
-                    "run_rctd": {
-                        "type": "boolean",
-                        "title": "Run RCTD Deconvolution",
-                        "default": true
-                    },
-                    "reference_scrna": {
-                        "type": "string",
-                        "title": "Reference scRNA-seq h5ad dataset for RCTD deconvolution (URL or S3 URI)"
-                    },
-                    "type_col_scrna": {
-                        "type": "string",
-                        "title": "Column name in the reference scRNA-seq dataset that contains the cell type labels",
-                        "default": "cell_type"
+                        "description": "Rely on cell_type column in the input Anndata.",
+                        "default": false
                     }
-                }
-            },
-            "ext_deconvolution":{
-                "title": "External reference-based deconvolution options",
-                "type": "object",
-                "properties": {
-                    "find_annotations": {
-                        "type": "boolean",
-                        "title": "Look for External Spot Annotations (e.g. CODA) in the dataset files."
-                    }
-                }
-            },
-            "deconvolution": {
-                "title": "Reference-free deconvolution options",
-                "type": "object",
-                "properties": {
-                    "n_cell_types": {
-                        "type": "integer",
-                        "title": "Number of Cell Types"
+                },
+                "if": {
+                    "properties": {
+                        "skip": { "const": false }
                     },
-                    "run_bayestme": {
-                        "type": "boolean",
-                        "title": "Run BayesTME"
-                    },
-                    "run_cogaps": {
-                        "type": "boolean",
-                        "title": "Run CoGAPS"
-                    }
+                    "required": ["skip"]
+                },
+                "then": {
+                    "properties": {
+                        "ref_deconvolution": {
+                            "title": "Reference-based deconvolution options",
+                            "type": "object",
+                            "properties": {
+                                "run_rctd": {
+                                    "type": "boolean",
+                                    "title": "Run RCTD Deconvolution",
+                                    "default": true
+                                },
+                                "reference_scrna": {
+                                    "type": "string",
+                                    "title": "Reference scRNA-seq h5ad dataset for RCTD deconvolution (URL or S3 URI)"
+                                },
+                                "type_col_scrna": {
+                                    "type": "string",
+                                    "title": "Column name in the reference scRNA-seq dataset that contains the cell type labels",
+                                    "default": "cell_type"
+                                }
+                            }
+                        },
+                        "ext_deconvolution": {
+                            "title": "External reference-based deconvolution options",
+                            "type": "object",
+                            "properties": {
+                                "find_annotations": {
+                                    "type": "boolean",
+                                    "title": "Look for External Spot Annotations (e.g. CODA) in the dataset files."
+                                }
+                            }
+                        },
+                        "noref_deconvolution": {
+                            "title": "Reference-free deconvolution options",
+                            "type": "object",
+                            "properties": {
+                                "n_cell_types": {
+                                    "type": "integer",
+                                    "title": "Number of Cell Types"
+                                },
+                                "run_bayestme": {
+                                    "type": "boolean",
+                                    "title": "Run BayesTME"
+                                },
+                                "run_cogaps": {
+                                    "type": "boolean",
+                                    "title": "Run CoGAPS"
+                                }
+                            }
+                        }
                     }
                 }
             },
