@@ -1,0 +1,7 @@
+sample,response,data_directory,expression_profile,age
+sample_0,non-responder,../../../tests/data/skip_deconvolve/sample_0_adata.h5ad,,81
+sample_1,responder,../../../tests/data/skip_deconvolve/sample_1_adata.h5ad,,76
+sample_2,non-responder,../../../tests/data/skip_deconvolve/sample_2_adata.h5ad,,43
+sample_3,responder,../../../tests/data/skip_deconvolve/sample_3_adata.h5ad,,21
+sample_4,responder,../../../tests/data/skip_deconvolve/sample_4_adata.h5ad,,30
+sample_5,responder,../../../tests/data/skip_deconvolve/sample_5_adata.h5ad,,74

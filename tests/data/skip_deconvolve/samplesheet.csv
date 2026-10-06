@@ -1,0 +1,7 @@
+sample,response,data_directory,expression_profile,age
+sample_0,non-responder,sample_0_adata.h5ad,,81
+sample_1,responder,sample_1_adata.h5ad,,76
+sample_2,non-responder,sample_2_adata.h5ad,,43
+sample_3,responder,sample_3_adata.h5ad,,21
+sample_4,responder,sample_4_adata.h5ad,,30
+sample_5,responder,sample_5_adata.h5ad,,74

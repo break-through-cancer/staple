@@ -1,6 +1,6 @@
 include { SQUIDPY_LIGREC_ANALYSIS } from '../../../modules/local/squidpy/main'
 
-workflow SQUIDPY {
+workflow SQUIDPY_LIGREC {
     take:
         ch_squidpy
     main:

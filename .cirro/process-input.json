@@ -7,7 +7,8 @@
         "cogaps": "$.dataset.params.deconvolution.run_cogaps",
         "bayestme": "$.dataset.params.deconvolution.run_bayestme",
         "rctd": "$.dataset.params.ref_deconvolution.run_rctd",
-        "external": "$.dataset.params.ext_deconvolution.find_annotations"
+        "external": "$.dataset.params.ext_deconvolution.find_annotations",
+        "skip": "$.dataset.params.deconvolution.skip"
     },
     "analyze":{
         "spacemarkers": "$.dataset.params.interact.run_spacemarkers",
