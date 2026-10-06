@@ -82,6 +82,11 @@
                     "run_cogaps": {
                         "type": "boolean",
                         "title": "Run CoGAPS"
+                    },
+                    "skip": {
+                        "type": "boolean",
+                        "title": "Skip Reference-free Deconvolution"
+                    }
                     }
                 }
             },
