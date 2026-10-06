@@ -9,10 +9,6 @@ import pickle
 from matplotlib import pyplot as plt
 import numpy as np
 from importlib.metadata import version
-<<<<<<< HEAD
-
-=======
->>>>>>> dev
 
 def default_ligrec(adata, par, **kwargs):
     if "gene_symbols" in kwargs:
