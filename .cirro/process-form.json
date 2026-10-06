@@ -1,7 +1,7 @@
 {
     "ui": {},
     "form": {
-        "title": "STAPLE: BTC 10X Visium Pipeline",
+        "title": "STAPLE: spatial transcriptomics pipeline",
         "type": "object",
         "properties": {
             "format": {
@@ -96,11 +96,13 @@
                                 },
                                 "run_bayestme": {
                                     "type": "boolean",
-                                    "title": "Run BayesTME"
+                                    "title": "Run BayesTME",
+                                    "default": false
                                 },
                                 "run_cogaps": {
                                     "type": "boolean",
-                                    "title": "Run CoGAPS"
+                                    "title": "Run CoGAPS",
+                                    "default": false
                                 }
                             }
                         }
