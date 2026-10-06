@@ -16,6 +16,7 @@ macOS 26.3.1 (a)
 Cirro web platform (https://cirro.bio/)
 slurm 23.11.6
 github Ubuntu runners
+Seqera (https://seqera.io/)
 ```
 
 ## Just trying
@@ -104,11 +105,35 @@ Run on Visium SD or HD with matched reference specified in the samplesheet and a
 nextflow run break-through-cancer/staple \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
-   --ref_scrna_type_col cell_type_column_name
+   --ref_scrna_type_col <cell_type_column_name>
 ```
 
-Pick a non-default reference-free deconvolution and ligand-receptor interaction tools:
+Run on Xenium:
+```bash
+nextflow run break-through-cancer/staple \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --xenium
+```
 
+Run on a set of Anndata inputs:
+```bash
+nextflow run break-through-cancer/staple \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --anndata
+```
+
+Run on a set of Anndata inputs without deconvolution (`adata.obs['cell_type']` must be present):
+```bash
+nextflow run break-through-cancer/staple \
+   -profile <docker/singularity/.../institute> \
+   --input samplesheet.csv \
+   --anndata \
+   --deconvolve.skip
+```
+
+Pick non-default reference-free deconvolution and ligand-receptor interaction tools:
 ```bash
 nextflow run break-through-cancer/staple \
    -profile <docker/singularity/.../institute> \
@@ -119,7 +144,7 @@ nextflow run break-through-cancer/staple \
 
 Control squidpy [ligand-receptor interaction](https://squidpy.readthedocs.io/en/stable/notebooks/examples/graph/compute_ligrec.html) parameters:
 
-Run in mouse data (or any other organism via ortholog conversion):
+Run on mouse data (or any other organism via ortholog conversion):
 ```bash
 --sq_gr_ligrec_interactions_params '{"organism":"10090"}'
 ```
@@ -151,13 +176,40 @@ To further assist in reproducbility, you can use share and re-use [parameter fil
 If you wish to share such profile (such as upload as supplementary material for academic publications), make sure to NOT include cluster specific paths to files, nor institutional specific profiles.
 :::
 
-## Core Nextflow arguments
+## Arguments
+
+### Pipeline
+
+There is a number of arguments that may be passed to the pipeline to control its behavior and configuration. The list of all arguments is available in the `nextflow.config` or the nextflow_schema.json files, below we list the ones that we think are most relevant for typical usage.
+
+#### Input format selection
+Use `--visium`, `--visium_hd <table>`, `--xenium`, or `--anndata` depending on the format of your input data. For `anndata`, provide paths to `.h5ad` files; otherwise provide paths to the appropriate raw data directories. For Visium HD, select the associated table with, for example, `--visium_hd square_008um`.
+
+#### Deconvolution / cell typing
+RCTD drops cells/bins with less than 100 UMIs. Control that with `--umi_min <number>`. Setting this parameter to a lower value will include more cells/bins with fewer UMIs, while setting it to a higher value will be more stringent.
+
+Use `--deconvolve.n_top_genes <number>` to control the number of top genes considered for deconvolution/cell typing. The default is 99999; setting it to a lower value can speed up computation and reduce memory usage.
+
+#### Squidpy
+Squidpy provides a lot of controls over database options for ligand-receptor analysis. Use `--sq_gr_ligrec_interactions_params '<JSON>'` to pass a JSON string with the desired parameters, for example: `--sq_gr_ligrec_interactions_params '{"resources": "CellPhoneDB"}'` to select only CellPhoneDB as the resource, or `--sq_gr_ligrec_interactions_params '{"organism":"10090"}'` to select mouse instead of human.
+
+The default way to estimate cell type co-occurrences is to split the whole slide into 50 bins. Change this, for example by using defined intervals like this: `sq_gr_co_occurrence_interval = '100,200,300'` or any other comma-separated list of bin sizes, or split in e.g. 10 bins instead: `sq_gr_co_occurrence_interval = 10`.
+
+#### Cross-sample analysis
+STAPLE performs cross-sample contrasts for metadata variables that are categorical and have exactly two observed levels across samples. Make sure to include relevant metadata columns in your samplesheet to enable meaningful cross-sample analysis. When performing such analysis, multiple testing correction is applied to control for false discoveries, but given the combination of many tests and potentially small sample sizes, the effects can get masked. Use `--analyze.spotlight` to specify which cell types to focus on in the cross-sample analysis, this reduces the number of tests and can help highlight significant effects. Example `--analyze.spotlight tumor`. Naturally, `'tumor'` should be a valid cell type present in your data.
+
+Control how many top features are shown in the cross-sample analysis using the `--analyze.show_top` parameter. The default is 50. This affects only display and does not change the underlying data files produced and stored in `staple/reports/`.
+
+`--analyze.only_spatial` flag will restrict the cross-sample analysis to only spatially variable genes, ignoring non-spatially variable genes in the pseudobulk analysis and ligand-receptor analysis.
+
+
+### Core
 
 :::note
 These options are part of Nextflow and use a _single_ hyphen (pipeline parameters use a double-hyphen).
 :::
 
-### `-profile`
+#### `-profile`
 
 Use this parameter to choose a configuration profile. Profiles can give configuration presets for different compute environments.
 
@@ -177,26 +229,19 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
   - Includes links to test data so needs no other parameters
 - `docker`
   - A generic configuration profile to be used with [Docker](https://docker.com/)
-- `singularity`
-  - A generic configuration profile to be used with [Singularity](https://sylabs.io/docs/)
-- `podman`
-  - A generic configuration profile to be used with [Podman](https://podman.io/)
-- `shifter`
-  - A generic configuration profile to be used with [Shifter](https://nersc.gitlab.io/development/shifter/how-to-use/)
-- `charliecloud`
-  - A generic configuration profile to be used with [Charliecloud](https://hpc.github.io/charliecloud/)
 - `apptainer`
   - A generic configuration profile to be used with [Apptainer](https://apptainer.org/)
-- `conda`
-  - A generic configuration profile to be used with [Conda](https://conda.io/docs/). Please only use Conda as a last resort i.e. when it's not possible to run the pipeline with Docker, Singularity, Podman, Shifter, Charliecloud, or Apptainer.
+- `...`
 
-### `-resume`
+We recommend creating a profile specific to your own compute environment to ensure optimal performance and reproducibility, especially if running on a high-performance computing cluster or other specialized infrastructure.
+
+#### `-resume`
 
 Specify this when restarting a pipeline. Nextflow will use cached results from any pipeline steps where the inputs are the same, continuing from where it got to previously. For input to be considered the same, not only the names must be identical but the files' contents as well. For more info about this parameter, see [this blog post](https://www.nextflow.io/blog/2019/demystifying-nextflow-resume.html).
 
 You can also supply a run name to resume a specific run: `-resume [run-name]`. Use the `nextflow log` command to show previous run names.
 
-### `-c`
+#### `-c`
 
 Specify the path to a specific config file (this is a core Nextflow command). See the [nf-core website documentation](https://nf-co.re/usage/configuration) for more information.
 

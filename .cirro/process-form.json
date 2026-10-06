@@ -1,14 +1,14 @@
 {
     "ui": {},
     "form": {
-        "title": "STAPLE: BTC 10X Visium Pipeline",
+        "title": "STAPLE: spatial transcriptomics pipeline",
         "type": "object",
         "properties": {
             "format": {
                 "type": "string",
                 "title": "Data format",
                 "enum": ["visium", "visium_hd", "xenium", "anndata"],
-                "default": "visium"
+                "default": "anndata"
              },
             "data": {
                 "title": "Data format options",
@@ -29,54 +29,83 @@
                         "type": "integer",
                         "title": "Number of Top Genes (by var) to keep - use lower number for faster runtime",
                         "default": 99999
-                    }
-                }
-            },
-            "ref_deconvolution":{
-                "title": "Reference-based deconvolution options",
-                "type": "object",
-                "properties": {
-                    "run_rctd": {
-                        "type": "boolean",
-                        "title": "Run RCTD Deconvolution",
-                        "default": true
                     },
-                    "reference_scrna": {
+                    "drop_prefix":{
                         "type": "string",
-                        "title": "Reference scRNA-seq h5ad dataset for RCTD deconvolution (URL or S3 URI)"
-                    },
-                    "type_col_scrna": {
-                        "type": "string",
-                        "title": "Column name in the reference scRNA-seq dataset that contains the cell type labels",
-                        "default": "cell_type"
-                    }
-                }
-            },
-            "ext_deconvolution":{
-                "title": "External reference-based deconvolution options",
-                "type": "object",
-                "properties": {
-                    "find_annotations": {
-                        "type": "boolean",
-                        "title": "Look for External Spot Annotations (e.g. CODA) in the dataset files."
+                        "title": "Prefix to drop from gene names. Can be comma-separated for multiple prefixes",
+                        "default": ""
                     }
                 }
             },
             "deconvolution": {
-                "title": "Reference-free deconvolution options",
+                "title": "Deconvolution / Cell Typing",
                 "type": "object",
                 "properties": {
-                    "n_cell_types": {
-                        "type": "integer",
-                        "title": "Number of Cell Types"
-                    },
-                    "run_bayestme": {
+                    "skip": {
                         "type": "boolean",
-                        "title": "Run BayesTME"
+                        "title": "Skip Deconvolution / Cell Typing",
+                        "description": "Rely on cell_type column in the input Anndata.",
+                        "default": false
+                    }
+                },
+                "if": {
+                    "properties": {
+                        "skip": { "const": false }
                     },
-                    "run_cogaps": {
-                        "type": "boolean",
-                        "title": "Run CoGAPS"
+                    "required": ["skip"]
+                },
+                "then": {
+                    "properties": {
+                        "ref_deconvolution": {
+                            "title": "Reference-based deconvolution options",
+                            "type": "object",
+                            "properties": {
+                                "run_rctd": {
+                                    "type": "boolean",
+                                    "title": "Run RCTD Deconvolution",
+                                    "default": true
+                                },
+                                "reference_scrna": {
+                                    "type": "string",
+                                    "title": "Reference scRNA-seq h5ad dataset for RCTD deconvolution (URL or S3 URI)"
+                                },
+                                "type_col_scrna": {
+                                    "type": "string",
+                                    "title": "Column name in the reference scRNA-seq dataset that contains the cell type labels",
+                                    "default": "cell_type"
+                                }
+                            }
+                        },
+                        "ext_deconvolution": {
+                            "title": "External reference-based deconvolution options",
+                            "type": "object",
+                            "properties": {
+                                "find_annotations": {
+                                    "type": "boolean",
+                                    "title": "Look for External Spot Annotations (e.g. CODA) in the dataset files."
+                                }
+                            }
+                        },
+                        "noref_deconvolution": {
+                            "title": "Reference-free deconvolution options",
+                            "type": "object",
+                            "properties": {
+                                "n_cell_types": {
+                                    "type": "integer",
+                                    "title": "Number of Cell Types"
+                                },
+                                "run_bayestme": {
+                                    "type": "boolean",
+                                    "title": "Run BayesTME",
+                                    "default": false
+                                },
+                                "run_cogaps": {
+                                    "type": "boolean",
+                                    "title": "Run CoGAPS",
+                                    "default": false
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -95,6 +124,26 @@
                     }
                 }
             },
+            "spatial": {
+                "title": "Spatial analysis options",
+                "type": "object",
+                "properties": {
+                    "sq_gr_ligrec_interactions_params":{
+                        "title": "Omnipath options (e.g. '{\"resources\": \"CellPhoneDB\"}')",
+                        "type": "string"
+                    },
+                    "sq_gr_co_occurrence_interval":{
+                        "title": "Number of distance bins to split co-occurrence analysis, or a list of intervals",
+                        "type": "string",
+                        "default": "100,200,300,400,500,600,700,800"
+                    },
+                    "na_as_value":{
+                        "title": "Replace NA in cell type with text, unset to keep as NA",
+                        "type": "boolean",
+                        "default": true
+                    }
+                }
+            },
             "xsample":{
                 "title": "Cross-sample analysis options",
                 "type": "object",
@@ -105,7 +154,7 @@
                     },
                     "spotlight": {
                         "type": "string",
-                        "title": "Feature only these cell types in analysis (comma-separated)"
+                        "title": "Focus on these cell types in analysis (comma-separated, at least one recommended)"
                     }
                 }
             }

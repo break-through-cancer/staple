@@ -14,6 +14,7 @@ import json
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.default_inference import DefaultInference
 from pydeseq2.ds import DeseqStats
+from importlib.metadata import version
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -83,21 +84,21 @@ def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, t
             else idx for idx in ligrecs_ttest.index]
 
         if(len(ligrecs_ttest_sig) == 0):
-            log.warning(f"No significant differential interactions found for {tool}.")
+            log.warning(f"No significant differential scores found for {tool}.")
         else:
             log.info(f"{len(ligrecs_ttest_sig)} significant differential \
-                interactions found for {tool} with p_adj<={filter}.")
+                scores found for {tool} with p_adj<={filter}.")
 
         res = ligrecs_ttest.sort_values('pval', ascending=True)
-        memo = f"Top {show} differential interactions across samples. There are \
+        memo = f"Top {show} differential scores across samples. There are \
                 {len(ligrecs_ttest_sig['pval_adj'])} significant differential \
-                interactions (p_adj<={filter}) found between \
+                scores (p_adj<={filter}) found between \
                 {groups[0]} and {groups[1]}, marked with *."
 
     else:
         ligrecs['mean'] = ligrecs.mean(axis=1)
         res = ligrecs.sort_values('mean', ascending=False)
-        memo = f"Top {show} mean interactions across samples shown as no groups \
+        memo = f"Top {show} mean scores across samples shown as no groups \
                  were specified in the sample sheet."
 
     if tool == 'squidpy_ligrec' and only_spatial:
@@ -105,6 +106,7 @@ def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, t
 
     res_show = res[samples][:show]
     res_dict = res_show.to_dict()
+    res_dict = dict(sorted(res_dict.items(), key=lambda item: item[0]))
     if var:
         id = f"{tool}_by_{var}"
     else:
@@ -459,11 +461,13 @@ def xsample_ttest(df, group1, group2):
 def versions():
     with open ("versions.yml", "w") as f:
         f.write(f"{process}:\\n")
-        f.write(f"    scipy: {sp.__version__}\\n")
-        f.write(f"    numpy: {np.__version__}\\n")
-        f.write(f"    anndata: {ad.__version__}\\n")
-        f.write(f"    pandas: {pd.__version__}\\n")
-        f.write(f"    json: {json.__version__}\\n")
+        f.write(f"    scipy: {version('scipy')}\\n")
+        f.write(f"    numpy: {version('numpy')}\\n")
+        f.write(f"    anndata: {version('anndata')}\\n")
+        f.write(f"    pandas: {version('pandas')}\\n")
+        f.write(f"    pydeseq2: {version('pydeseq2')}\\n")
+        f.write(f"    matplotlib: {version('matplotlib')}\\n")
+        f.write(f"    seaborn: {version('seaborn')}\\n")
 
 
 def get_vars(adatas, only=None):
@@ -551,18 +555,18 @@ if __name__ == '__main__':
     mqc_reports_dir = "reports/mqc"
     os.makedirs(mqc_reports_dir, exist_ok=True)
 
-    # generate neighbors report
+    # generate neighbors report - do not apply splotlight for generic reports
     try:
         log.info("Generating neighbors report.")
-        neigh_mqc, neigh_csv = neighbors_report(adatas, spotlight=spotlight, ignore_self=ignore_self)
+        neigh_mqc, neigh_csv = neighbors_report(adatas, spotlight=None, ignore_self=ignore_self)
         save_reports(neigh_mqc, neigh_csv, "neighbors", mqc_decimals=mqc_decimals)
     except Exception as e:
         log.warning(f"Could not generate neighbors report: {e}")
 
-    # generate centrality report - separately
+    # generate centrality report - separately, do not apply spotlight for generic reports
     try:
         log.info("Generating centrality report.")
-        centrality = centrality_reports(adatas, spotlight=spotlight)
+        centrality = centrality_reports(adatas, spotlight=None)
         for score, report in centrality.items():
             save_reports(report[0], report[1], f"centrality_{score}", mqc_decimals=mqc_decimals)
     except Exception as e:
@@ -735,7 +739,7 @@ if __name__ == '__main__':
                         for k in report_dict.keys()
                     }
                     reports.append(z_diff_report)
-                memo = f"Median difference of co-occurrence across groups of variable {var} ({groups[0]} - {groups[1]})."
+                memo = f"Median difference of co-occurrence across groups by variable {var} ({groups[0]} - {groups[1]}). The plot is organized by focal cell type and displays differences in co-occurrence of each other cell type with the focal cell type at each of the observed intervals."
                 if spotlight:
                     memo += f" Spotlight mode on {spotlight}"
                 mqc_report = {
