@@ -37,6 +37,11 @@
                     }
                 }
             },
+            "skip": {
+                        "type": "boolean",
+                        "title": "Skip Deconvolution / Cell Typing",
+                        "description": "Rely on cell_type column in the input Anndata."
+                    },
             "ref_deconvolution":{
                 "title": "Reference-based deconvolution options",
                 "type": "object",
@@ -82,10 +87,6 @@
                     "run_cogaps": {
                         "type": "boolean",
                         "title": "Run CoGAPS"
-                    },
-                    "skip": {
-                        "type": "boolean",
-                        "title": "Skip Reference-free Deconvolution"
                     }
                     }
                 }
