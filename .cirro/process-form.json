@@ -8,7 +8,7 @@
                 "type": "string",
                 "title": "Data format",
                 "enum": ["visium", "visium_hd", "xenium", "anndata"],
-                "default": "visium"
+                "default": "anndata"
              },
             "data": {
                 "title": "Data format options",
@@ -29,6 +29,11 @@
                         "type": "integer",
                         "title": "Number of Top Genes (by var) to keep - use lower number for faster runtime",
                         "default": 99999
+                    },
+                    "drop_prefix":{
+                        "type": "string",
+                        "title": "Prefix to drop from gene names. Can be comma-separated for multiple prefixes",
+                        "default": ""
                     }
                 }
             },
@@ -95,6 +100,26 @@
                     }
                 }
             },
+            "spatial": {
+                "title": "Spatial analysis options",
+                "type": "object",
+                "properties": {
+                    "sq_gr_ligrec_interactions_params":{
+                        "title": "Omnipath options (e.g. '{\"resources\": \"CellPhoneDB\"}')",
+                        "type": "string"
+                    },
+                    "sq_gr_co_occurrence_interval":{
+                        "title": "Number of distance bins to split co-occurrence analysis, or a list of intervals",
+                        "type": "string",
+                        "default": "100,200,300,400,500,600,700,800"
+                    },
+                    "na_as_value":{
+                        "title": "Replace NA in cell type with text, unset to keep as NA",
+                        "type": "boolean",
+                        "default": true
+                    }
+                }
+            },
             "xsample":{
                 "title": "Cross-sample analysis options",
                 "type": "object",
@@ -105,7 +130,7 @@
                     },
                     "spotlight": {
                         "type": "string",
-                        "title": "Feature only these cell types in analysis (comma-separated)"
+                        "title": "Focus one these cell types in analysis (comma-separated, at least one recommended)"
                     }
                 }
             }

@@ -2,6 +2,7 @@
 import anndata as ad
 import os
 import logging
+from importlib.metadata import version
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
@@ -44,4 +45,4 @@ adata.write_h5ad(f"{sample}/adata.h5ad", compression='gzip')
 #versions
 with open("versions.yml", "w") as f:
     f.write("${task.process}:\\n")
-    f.write("    anndata: {}\\n".format(ad.__version__))
+    f.write("    anndata: {}\\n".format(version("anndata")))

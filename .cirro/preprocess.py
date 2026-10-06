@@ -43,8 +43,9 @@ def prepare_samplesheet(ds: PreprocessDataset) -> pd.DataFrame:
     # to look for in the data directory downstream
     if 'reference_scrna' in ds.params and not is_url(ds.params['reference_scrna']):
         ds.params['expression_profile'] = ds.params['reference_scrna']
-    
+
     samplesheet = samplesheet_from_files(ds)
+    ds.logger.info(f'Prepared samplesheet from files: {samplesheet.to_dict()}')
     
     #check is pipeline uses Cirro samplesheet, and if not prepare it from params
     if samplesheet.empty:
@@ -53,8 +54,10 @@ def prepare_samplesheet(ds: PreprocessDataset) -> pd.DataFrame:
         if samplesheet.empty:
             raise ValueError("No files found in dataset and unable to prepare samplesheet from params.")
         ds.logger.info("Prepared samplesheet from params.")
-    
+        
+
     # Ensure all required columns are present (populate missing)
+    ds.logger.info(f"Columns present in samplesheet: {samplesheet.columns.tolist()}")
     for colname in SAMPLESHEET_REQUIRED_COLUMNS:
         if colname not in samplesheet.columns:
             ds.logger.warning(f"Samplesheet is missing required column '{colname}'. Populating with NaN.")
@@ -89,11 +92,15 @@ def samplesheet_from_files(ds):
     # Assumes samplesheet associates sample with a file in the sample's root directory
     # Convert s3 link to PosixPath and derive parent; convert back into string
     # Path converts s3:// to s3:/, so revert proper s3 prefix afterwards
-    files['data_directory'] = files['file'].apply(lambda x: str(Path(x).parent).replace('s3:/', 's3://'))
+    files['data_directory'] = files['file'].apply(lambda x: str(Path(x)).replace('s3:/', 's3://'))
     files = files[['sample','data_directory']]
 
-    samplesheet = pd.merge(ds.samplesheet, files, on='sample', how='left')
-    
+    samplesheet = pd.merge(ds.samplesheet, files, on='sample', how='left', suffixes=('_drop', ''))
+    # Drop any columns that were suffixed with '_drop' due to merge conflicts
+    if any(col.endswith('_drop') for col in samplesheet.columns):
+        drops = [col.replace('_drop', '') for col in samplesheet.columns if col.endswith('_drop')]
+        ds.logger.warning(f"Dropping duplicate columns with conflicts: {drops}.")
+        samplesheet = samplesheet.loc[:, ~samplesheet.columns.str.endswith('_drop')]
 
     return samplesheet
 

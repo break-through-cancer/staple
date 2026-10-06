@@ -15,10 +15,10 @@ out = "${prefix}"
 process = "${task.process}"
 cell_type = "cell_type"
 na_as_value = "${params.na_as_value}".lower() == 'true'
-seed = ${params.seed}
-nperms = ${params.sq_gr_spatial_autocorr_nperms}
-n_jobs = ${task.cpus}
-filter = ${params.analyze.filter}
+seed = int("${params.seed}")
+nperms = int("${params.sq_gr_spatial_autocorr_nperms}")
+n_jobs = int("${task.cpus}")
+filter = float("${params.analyze.filter}")
 interval = "${params.sq_gr_co_occurrence_interval}"
 
 
