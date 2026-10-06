@@ -39,7 +39,7 @@ custom_data:
     parent_id: 'cell_types'
     parent_description: 'Summaries of the cell typing results.'
     plot_type: 'table'
-    section_name: 'Cell Type Counts'
+    section_name: 'Output Summary'
     description: 'Summary of the AnnData object after deconvolution / cell typing.'
   deconvolved_ct:
     parent_name: 'Cell Typing'

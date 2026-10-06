@@ -99,12 +99,11 @@ def samplesheet_from_files(ds):
         files['data_directory'] = files['file'].apply(lambda x: str(Path(x).parent).replace('s3:/', 's3://'))
     
     files = files[['sample','data_directory']]
+    conflicting_columns = ds.samplesheet.columns.intersection(files.columns).difference(['sample'])
     samplesheet = pd.merge(ds.samplesheet, files, on='sample', how='left', suffixes=('_drop', ''))
-    # Drop any columns that were suffixed with '_drop' due to merge conflicts
-    if any(col.endswith('_drop') for col in samplesheet.columns):
-        drops = [col.replace('_drop', '') for col in samplesheet.columns if col.endswith('_drop')]
-        ds.logger.warning(f"Dropping duplicate columns with conflicts: {drops}.")
-        samplesheet = samplesheet.loc[:, ~samplesheet.columns.str.endswith('_drop')]
+    if len(conflicting_columns):
+        ds.logger.warning(f"Dropping duplicate columns with conflicts: {conflicting_columns.tolist()}.")
+        samplesheet = samplesheet.drop(columns=[f'{col}_drop' for col in conflicting_columns])
 
     return samplesheet
 

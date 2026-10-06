@@ -154,7 +154,7 @@
                     },
                     "spotlight": {
                         "type": "string",
-                        "title": "Focus one these cell types in analysis (comma-separated, at least one recommended)"
+                        "title": "Focus on these cell types in analysis (comma-separated, at least one recommended)"
                     }
                 }
             }

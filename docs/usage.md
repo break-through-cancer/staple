@@ -191,7 +191,7 @@ RCTD drops cells/bins with less than 100 UMIs. Control that with `--umi_min <num
 Use `--deconvolve.n_top_genes <number>` to control the number of top genes considered for deconvolution/cell typing. The default is 99999; setting it to a lower value can speed up computation and reduce memory usage.
 
 #### Squidpy
-Squidpy provides a lot of controls over database options for ligand-receptor analysis. Use `sq_gr_ligrec_interactions_params` to pass a JSON string with the desired parameters, for example: ` '{"resources": "CellPhoneDB"}'` to select only CellPhoneDB as the resource, or `'{"organism":"10090"}'` to select mouse instead of human.
+Squidpy provides a lot of controls over database options for ligand-receptor analysis. Use `--sq_gr_ligrec_interactions_params '<JSON>'` to pass a JSON string with the desired parameters, for example: `--sq_gr_ligrec_interactions_params '{"resources": "CellPhoneDB"}'` to select only CellPhoneDB as the resource, or `--sq_gr_ligrec_interactions_params '{"organism":"10090"}'` to select mouse instead of human.
 
 The default way to estimate cell type co-occurrences is to split the whole slide into 50 bins. Change this, for example by using defined intervals like this: `sq_gr_co_occurrence_interval = '100,200,300'` or any other comma-separated list of bin sizes, or split in e.g. 10 bins instead: `sq_gr_co_occurrence_interval = 10`.
 
