@@ -349,7 +349,7 @@ nextflow_pipeline {
             assertAll(
                 { assert workflow.success },
                 { assert file("${outputDir}/adata/sample1/adata.h5ad").exists() },
-                { assert file("${outputDir}/spacemarkers/sample1/visium_cellular_compositions/IMScores.rds").exists() }
+                { assert file("${outputDir}/spacemarkers/sample1/external/IMScores.rds").exists() }
             )
         }
 
