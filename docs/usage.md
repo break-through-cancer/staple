@@ -142,6 +142,14 @@ nextflow run break-through-cancer/staple \
    --analyze.<spacemarkers/squidpy> \
 ```
 
+Control SpaceMarkers:
+```bash
+--sm_directed <true/false> \
+--sm_patterns_uns <uns key> \
+--sm_spot_diameter <pixels> 
+```
+
+
 Control squidpy [ligand-receptor interaction](https://squidpy.readthedocs.io/en/stable/notebooks/examples/graph/compute_ligrec.html) parameters:
 
 Run on mouse data (or any other organism via ortholog conversion):
@@ -194,6 +202,13 @@ Use `--deconvolve.n_top_genes <number>` to control the number of top genes consi
 Squidpy provides a lot of controls over database options for ligand-receptor analysis. Use `--sq_gr_ligrec_interactions_params '<JSON>'` to pass a JSON string with the desired parameters, for example: `--sq_gr_ligrec_interactions_params '{"resources": "CellPhoneDB"}'` to select only CellPhoneDB as the resource, or `--sq_gr_ligrec_interactions_params '{"organism":"10090"}'` to select mouse instead of human.
 
 The default way to estimate cell type co-occurrences is to split the whole slide into 50 bins. Change this, for example by using defined intervals like this: `sq_gr_co_occurrence_interval = '100,200,300'` or any other comma-separated list of bin sizes, or split in e.g. 10 bins instead: `sq_gr_co_occurrence_interval = 10`.
+
+### SpaceMarkers
+SpaceMarkers runs on the AnnData produced after cell typing and needs latent features (cell type composition) in `adata.uns`, see `--analyze.sm_patterns_uns`. Samples without them are skipped.
+
+Undirected SpaceMarkers (default below 10000 spots) reports IMscores for gene names and undirected cell type interactions (cell_type1 near cell_type2 is no different to cell_type2 near cell_type1). Directed SpaceMarkers (default from 10000 spots, or `--analyze.sm_directed true`) reports IMscores for gene names in a directed fashion (cell_type1 near cell_type2 is different to cell_type2 near cell_type1) but also reports LRscores, which are the interaction scores between genes listed in a database that SpaceMarkers uses (CellChat) by default.
+
+Spot-based formats provide spatial resolution information unlike segmented formats such as segmented HD Visium or Xenium, so there should be two, small (10um) for surface contact interactions and larger (30um-50um) for secretion based interactions depending on the analysis goal. Use `--sm_spot_diameter` to control, empty default will look for the spot diameter from `adata.uns['spatial']` and try to estimate it if not found.
 
 #### Cross-sample analysis
 STAPLE performs cross-sample contrasts for metadata variables that are categorical and have exactly two observed levels across samples. Make sure to include relevant metadata columns in your samplesheet to enable meaningful cross-sample analysis. When performing such analysis, multiple testing correction is applied to control for false discoveries, but given the combination of many tests and potentially small sample sizes, the effects can get masked. Use `--analyze.spotlight` to specify which cell types to focus on in the cross-sample analysis, this reduces the number of tests and can help highlight significant effects. Example `--analyze.spotlight tumor`. Naturally, `'tumor'` should be a valid cell type present in your data.

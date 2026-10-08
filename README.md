@@ -28,8 +28,6 @@ flowchart LR
     v4 --> v31
     v25 --> v31
     v10 --> v31
-
-
 ```
 
 
@@ -44,7 +42,7 @@ Check out the [usage documentation](docs/usage.md) for instructions on how to ru
 
 ## Limitations
 
-Not all the tools support all the formats. Use these guidelines to pick parameters in case the fully functioning defaults (RCTD + Squidpy) are not desired.
+Not all the tools support all the formats. Use these guidelines to pick parameters in case the defaults (RCTD + Squidpy) are not desired.
 
 | tool/format | Visium SD | Visium HD | HD segmented | Xenium | Generic Anndata | Cross-sample |
 | ----------- | --------- | --------- | ------------ | ------ | --------------- | ------------- |
@@ -52,14 +50,11 @@ Not all the tools support all the formats. Use these guidelines to pick paramete
 | Squidpy | OK | OK | OK | OK | OK | OK |
 | CoGAPS | OK | reduce gene N | reduce gene N | OK | OK | samples not integrated |
 | BayesTME | OK | | | | | samples not integrated |
-| SpaceMarkers | OK | OK | | | | OK |
+| SpaceMarkers | OK | OK | OK | OK* | OK | OK |
 
+*not yet tested
 
-SpaceMarkers for SD reports IMscores for gene names and undirected cell type interactions (cell_type1 near cell_type2 is no different to cell_type2 near cell_type1)
-
-SpaceMarkers for HD reports IMscores for gene names in a directed fashion (cell_type1 near cell_type2 is different to cell_type2 near cell_type1) but also reports LRscores, which are the interaction scores between genes listed in a database that SpaceMarkers uses (CellChat) by default.
-
-Furthermore, not all the tools are fully featured in the cross-sample analysis. So, BayesTME is not yet integrated into the MultiQC module, as well as since BayesTME and CoGAPS are reference-free, the synthetic cell type outputs they produce does not match across samples.
+Not all the tools are fully featured in the cross-sample analysis. So, BayesTME is not yet integrated into the MultiQC module, as well as since BayesTME and CoGAPS are reference-free, the synthetic cell type outputs they produce does not match across samples.
 
 
 ## Contributions and Support
