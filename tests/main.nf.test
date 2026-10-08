@@ -232,7 +232,7 @@ nextflow_pipeline {
                 { assert file("${outputDir}/atlas/${params.ref_scrna.tokenize("/")[-1]}").exists() },
                 { assert file("${outputDir}/atlas/sample1/adata_matched.h5ad").exists() },
                 { assert file("${outputDir}/rctd/sample1/rctd_cell_types.csv").exists() },
-                { assert file("${outputDir}/spacemarkers/sample1/rctd_cell_types/IMScores.rds").exists() },
+                { assert file("${outputDir}/spacemarkers/sample1/spacemarkers/IMScores.rds").exists() },
                 { assert file("${outputDir}/squidpy/sample1/rctd/figures/spatial_scatter.png").exists() },
                 { assert file("${outputDir}/multiqc/multiqc_report.html").exists() }
             )
@@ -272,7 +272,7 @@ nextflow_pipeline {
                 { assert file("${outputDir}/atlas/${params.ref_scrna.tokenize("/")[-1]}").exists() },
                 { assert file("${outputDir}/atlas/sample1/adata_matched.h5ad").exists() },
                 { assert file("${outputDir}/rctd/sample1/rctd_cell_types.csv").exists() },
-                { assert file("${outputDir}/spacemarkers/sample1/rctd_cell_types/LRscores.rds").exists() },
+                //{ assert file("${outputDir}/spacemarkers/sample1/rctd_cell_types/LRscores.rds").exists() }, expected in real data but does not exist for small test
                 { assert file("${outputDir}/squidpy/sample1/rctd/figures/spatial_scatter.png").exists() },
                 { assert file("${outputDir}/multiqc/multiqc_report.html").exists() }
             )
@@ -298,7 +298,7 @@ nextflow_pipeline {
                     n_top_genes = 1000
                 }
                 analyze {
-                    spacemarkers = false // will not work yet with segmented outputs
+                    spacemarkers = true
                     squidpy = true
                 }
                 visium_hd = "cell_segmentations"
@@ -313,7 +313,8 @@ nextflow_pipeline {
                 { assert file("${outputDir}/atlas/${params.ref_scrna.tokenize("/")[-1]}").exists() },
                 { assert file("${outputDir}/atlas/sample1/adata_matched.h5ad").exists() },
                 { assert file("${outputDir}/rctd/sample1/rctd_cell_types.csv").exists() },
-                //{ assert file("${outputDir}/spacemarkers/sample1/rctd_cell_types/LRscores.rds").exists() }, // will not work yet with segmented outputs
+                { assert file("${outputDir}/spacemarkers/sample1/rctd_cell_types/IMScores.rds").exists() },
+                //{ assert file("${outputDir}/spacemarkers/sample1/rctd_cell_types/LRscores.rds").exists() }, expected in real data but does not exist for small test
                 { assert file("${outputDir}/squidpy/sample1/rctd/figures/spatial_scatter.png").exists() },
                 { assert file("${outputDir}/multiqc/multiqc_report.html").exists() }
             )

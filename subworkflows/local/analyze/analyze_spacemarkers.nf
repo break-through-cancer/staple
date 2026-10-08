@@ -1,5 +1,5 @@
-include { SPACEMARKERS_HD } from '../../../modules/local/spacemarkers/nextflow/main_hd'
-include { SPACEMARKERS as SPACEMARKERS_SD } from '../../../modules/local/spacemarkers/nextflow/main'
+include { SPACEMARKERS as SPACEMARKERS_RUN } from '../../../modules/local/spacemarkers/nextflow/main'
+include { SPACEMARKERS_CHECK } from '../../../modules/local/util/'
 include { SPACEMARKERS_HARMONIZE as SPACEMARKERS_HARMONIZE_IMSCORES } from '../../../modules/local/util/'
 include { SPACEMARKERS_HARMONIZE as SPACEMARKERS_HARMONIZE_LRSCORES } from '../../../modules/local/util/'
 
@@ -7,31 +7,24 @@ include { SPACEMARKERS_HARMONIZE as SPACEMARKERS_HARMONIZE_LRSCORES } from '../.
 workflow SPACEMARKERS {
 
     take:
-        ch_sm_inputs   // from DECONVOLVE, csv if available or (BayesTME, CoGAPS) obj - SpaceMarkers knows how to handle both
+        ch_adata   // [meta, h5ad] after cell typing
     main:
         versions = channel.empty()
-        lrscores_raw = channel.empty() // because HD outputs both imscores and lrscores but SD only imscores
 
-        if(params.visium_hd) {
-            SPACEMARKERS_HD( ch_sm_inputs.map {it -> [it[0], it[1], it[2]+"/binned_outputs/${params.visium_hd}" ]} )
-            // IMScores: IMScores.rds with row names holding gene names,
-            // followed by cell_type1_near_cell_typeN columns, values are IMScores
-            // LRscores: LRscores.rds with row names holding ligand-receptor pair names,
-            // followed by cell_type1_near_cell_typeN columns, values are LRscores
-            versions = versions.mix(SPACEMARKERS_HD.out.versions)
-            imscores_raw = SPACEMARKERS_HD.out.IMscores
-            lrscores_raw = SPACEMARKERS_HD.out.LRscores
+        // keep only samples that have latent features in adata.uns
+        SPACEMARKERS_CHECK( ch_adata )
+        versions = versions.mix(SPACEMARKERS_CHECK.out.versions)
+        ch_eligible = SPACEMARKERS_CHECK.out.checked
+            .filter { _meta, _adata, eligible -> eligible.trim() == 'true' }
+            .map { meta, adata, _eligible -> [meta, adata] }
 
-        } else {
-            SPACEMARKERS_SD( ch_sm_inputs )
-            // IMScores: spacemarkers.csv first column is Gene with gene name, 
-            // followed by cell_type1_cell_typeN columns, values are spacemarkers
-            versions = versions.mix(SPACEMARKERS_SD.out.versions)
-            imscores_raw = SPACEMARKERS_SD.out.spaceMarkersScores
-        }
+        SPACEMARKERS_RUN( ch_eligible )
+        // IMScores: IMscores.rds with row names holding gene names, one column per pattern pair
+        // LRscores: LRscores.rds with ligand-receptor pairs as row names, directed mode only
+        versions = versions.mix(SPACEMARKERS_RUN.out.versions)
 
-    SPACEMARKERS_HARMONIZE_IMSCORES( imscores_raw )
-    SPACEMARKERS_HARMONIZE_LRSCORES ( lrscores_raw )
+    SPACEMARKERS_HARMONIZE_IMSCORES( SPACEMARKERS_RUN.out.IMscores )
+    SPACEMARKERS_HARMONIZE_LRSCORES( SPACEMARKERS_RUN.out.LRscores )
 
     imscores = SPACEMARKERS_HARMONIZE_IMSCORES.out.spacemarkers
     lrscores = SPACEMARKERS_HARMONIZE_LRSCORES.out.spacemarkers
