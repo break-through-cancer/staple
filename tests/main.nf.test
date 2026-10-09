@@ -272,7 +272,7 @@ nextflow_pipeline {
                 { assert file("${outputDir}/atlas/${params.ref_scrna.tokenize("/")[-1]}").exists() },
                 { assert file("${outputDir}/atlas/sample1/adata_matched.h5ad").exists() },
                 { assert file("${outputDir}/rctd/sample1/rctd_cell_types.csv").exists() },
-                //{ assert file("${outputDir}/spacemarkers/sample1/rctd_cell_types/LRscores.rds").exists() }, expected in real data but does not exist for small test
+                { assert file("${outputDir}/spacemarkers/sample1/rctd/IMscores.rds").exists() },
                 { assert file("${outputDir}/squidpy/sample1/rctd/figures/spatial_scatter.png").exists() },
                 { assert file("${outputDir}/multiqc/multiqc_report.html").exists() }
             )
