@@ -204,9 +204,9 @@ Squidpy provides a lot of controls over database options for ligand-receptor ana
 The default way to estimate cell type co-occurrences is to split the whole slide into 50 bins. Change this, for example by using defined intervals like this: `sq_gr_co_occurrence_interval = '100,200,300'` or any other comma-separated list of bin sizes, or split in e.g. 10 bins instead: `sq_gr_co_occurrence_interval = 10`.
 
 ### SpaceMarkers
-SpaceMarkers runs on the AnnData produced after cell typing and needs latent features (cell type composition) in `adata.uns`, see `--analyze.sm_patterns_uns`. Samples without them are skipped.
+SpaceMarkers runs on the AnnData produced after cell typing and needs latent features (cell type composition) in `adata.uns`, see `--sm_patterns_uns`. Samples without them are skipped.
 
-Undirected SpaceMarkers (default below 10000 spots) reports IMscores for gene names and undirected cell type interactions (cell_type1 near cell_type2 is no different to cell_type2 near cell_type1). Directed SpaceMarkers (default from 10000 spots, or `--analyze.sm_directed true`) reports IMscores for gene names in a directed fashion (cell_type1 near cell_type2 is different to cell_type2 near cell_type1) but also reports LRscores, which are the interaction scores between genes listed in a database that SpaceMarkers uses (CellChat) by default.
+Undirected SpaceMarkers (default below 10000 spots) reports IMscores for gene names and undirected cell type interactions (cell_type1 near cell_type2 is no different to cell_type2 near cell_type1). Directed SpaceMarkers (default from 10000 spots, or `--sm_directed true`) reports IMscores for gene names in a directed fashion (cell_type1 near cell_type2 is different to cell_type2 near cell_type1) but also reports LRscores, which are the interaction scores between genes listed in a database that SpaceMarkers uses (CellChat) by default.
 
 Spot-based formats provide spatial resolution information unlike segmented formats such as segmented HD Visium or Xenium, so there should be two, small (10um) for surface contact interactions and larger (30um-50um) for secretion based interactions depending on the analysis goal. Use `--sm_spot_diameter` to control, empty default will look for the spot diameter from `adata.uns['spatial']` and try to estimate it if not found.
 
