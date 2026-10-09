@@ -481,10 +481,27 @@ process STAPLE_ATTACH_LIGREC {
 }
 
 
+process SPACEMARKERS_CHECK {
+    tag "$meta.id"
+    label 'process_single'
+    container "ghcr.io/break-through-cancer/btc-containers/scverse@sha256:ed44380c6e6e73fc575b743eba864941c26880053e50c3d70b5c9bfc526c0520"
+
+    input:
+        tuple val(meta), path(adata)
+
+    output:
+        tuple val(meta), path(adata), stdout, emit: checked
+        path "versions.yml",                  emit: versions
+
+    script:
+    template 'spacemarkers_check.py'
+}
+
+
 process SPACEMARKERS_HARMONIZE {
     tag "$meta.id"
     label 'process_medium'
-    container 'ghcr.io/deshpandelab/spacemarkers@sha256:9c06f8f9340bb5c51300dbf3bc4e803613a15e1bd349eae43d5a129462a13f4e'
+    container 'ghcr.io/deshpandelab/spacemarkers@sha256:e13854a27622a04293fd8c26e8829a0407ab08a91d06259ece02eb440eab9ae2'
 
 
     input:

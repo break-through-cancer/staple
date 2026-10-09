@@ -8,9 +8,8 @@ include { STAPLE_ATTACH_LIGREC as STAPLE_ATTACH_LRSCORES } from '../../../module
 
 workflow ANALYZE {
 
-    take: 
-        ch_sm_inputs   // from DECONVOLVE
-        ch_squidpy
+    take:
+        ch_squidpy   // [meta, h5ad] from DECONVOLVE
     main:
 
     versions = channel.empty()
@@ -21,7 +20,7 @@ workflow ANALYZE {
 
     // ligrec - spacemarkers if requested
     if (params.analyze.spacemarkers){
-        SPACEMARKERS(ch_sm_inputs)
+        SPACEMARKERS(ch_squidpy)
         versions = versions.mix(SPACEMARKERS.out.versions)
         // pass ligrec results along
         imscores = imscores.mix(SPACEMARKERS.out.imscores)
@@ -63,13 +62,11 @@ workflow ANALYZE {
             ch_with_im.filter { it -> it[2] == null }.map { meta, ad, _im -> [meta, ad] }
         )
         adata = attach_lrscores_to
-        if (params.visium_hd){
-            ch_with_lr = attach_lrscores_to.join(lrscores, remainder: true)
-            STAPLE_ATTACH_LRSCORES(ch_with_lr.filter { it -> it[2] != null })
-            adata = STAPLE_ATTACH_LRSCORES.out.adata.mix(
-                ch_with_lr.filter { it -> it[2] == null }.map { meta, ad, _lr -> [meta, ad] }
-            )
-        }
+        ch_with_lr = attach_lrscores_to.join(lrscores, remainder: true)
+        STAPLE_ATTACH_LRSCORES(ch_with_lr.filter { it -> it[2] != null })
+        adata = STAPLE_ATTACH_LRSCORES.out.adata.mix(
+            ch_with_lr.filter { it -> it[2] == null }.map { meta, ad, _lr -> [meta, ad] }
+        )
     }
 
     emit:

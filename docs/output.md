@@ -63,10 +63,9 @@ QC module does not produce any output files, but the results of the QC checks ar
           - `ligrec-interactions.pickle`: Pickle object containing the results of the ligand-receptor analysis.
 - `spacemarkers/`
   - `<sample>/`
-      - `<tool>/`
-        - `spaceMarkersObject.rds`: object containing SpaceMarkers results.
-        - `IMScores.rds`: SpaceMarkers interaction scores (undirected)
-        - `LRScores.rds`: SpaceMarkers ligand-receptor interaction scores (directed, not output for SD)
+      - `<source>/`
+        - `IMscores.rds`: SpaceMarkers interaction scores for genes (directed or undirected, see usage)
+        - `LRscores.rds`: SpaceMarkers ligand-receptor interaction scores (directed mode only)
 
 </details>
 

@@ -3,7 +3,7 @@ nextflow_process {
     script  "modules/local/spacemarkers/nextflow/main.nf"
     process "SPACEMARKERS"
 
-    test("Should generate spacemarkers for valid input") {
+    test("Should run undirected on a small sample by default") {
 
         tag "process"
         tag "spacemarkers"
@@ -12,19 +12,74 @@ nextflow_process {
             params {
                 max_memory = '8.GB'
                 max_cpus   = 2
+                sm_directed = ''
+                sm_patterns_uns = 'cell_type_composition'
+                sm_spot_diameter = ''
             }
             process {
                 """
-                input[0] = [[id:"sample"],
-                            file("${projectDir}/tests/data/visium/visium_cellular_compositions.csv"),
-                            file("${projectDir}/tests/data/visium")]
+                input[0] = [[id:"sample"], file("${projectDir}/tests/data/rctd.h5ad")]
                 """
             }
         }
 
         then {
             assert process.success
-            assert process.out.spaceMarkersScores
+            assert process.out.IMscores
+            assert !process.out.LRscores
+        }
+    }
+
+    test("Should run directed when forced") {
+
+        tag "process"
+        tag "spacemarkers"
+
+        when {
+            params {
+                max_memory = '8.GB'
+                max_cpus   = 2
+                sm_directed = true
+                sm_patterns_uns = 'cell_type_composition'
+                sm_spot_diameter = ''
+            }
+            process {
+                """
+                input[0] = [[id:"sample"], file("${projectDir}/tests/data/rctd.h5ad")]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.IMscores
+            assert process.out.LRscores
+        }
+    }
+
+    test("Should accept a spot diameter override") {
+
+        tag "process"
+        tag "spacemarkers"
+
+        when {
+            params {
+                max_memory = '8.GB'
+                max_cpus   = 2
+                sm_directed = false
+                sm_patterns_uns = 'cell_type_composition'
+                sm_spot_diameter = 90
+            }
+            process {
+                """
+                input[0] = [[id:"sample"], file("${projectDir}/tests/data/rctd.h5ad")]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.IMscores
         }
     }
 }

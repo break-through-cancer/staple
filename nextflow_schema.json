@@ -309,7 +309,7 @@
         },
         "seed": {
             "type": "integer",
-            "default": 41263
+            "default": 42
         },
         "distributed": {
             "type": "string"
@@ -389,15 +389,7 @@
         },
         "na_as_value": {
             "type": "string",
-            "default": true
-        },
-        "use_ligand_receptor_genes": {
-            "type": "boolean",
-            "default": true
-        },
-        "good_gene_threshold": {
-            "type": "integer",
-            "default": 1000
+            "default": "True"
         },
         "drop_genes_prefix": {
             "type": "string",
@@ -424,6 +416,24 @@
         "sq_gr_co_occurrence_interval": {
             "type": "integer",
             "default": 50
+        },
+        "sm_use_lr_genes": {
+            "type": "boolean",
+            "default": true
+        },
+        "sm_good_gene_thd": {
+            "type": "integer",
+            "default": 1000
+        },
+        "sm_patterns_uns": {
+            "type": "string",
+            "default": "cell_type_composition"
+        },
+        "sm_directed": {
+            "type": "string"
+        },
+        "sm_spot_diameter": {
+            "type": "string"
         }
     }
 }
