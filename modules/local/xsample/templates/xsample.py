@@ -454,6 +454,7 @@ def xsample_ttest(df, group1, group2):
     padj[valid] = sp.stats.false_discovery_control(res['pval'][valid], method='bh')
     res['pval_adj'] = padj
     res.sort_values('pval_adj', inplace=True)
+    res.dropna(subset=['statistic','pval','pval_adj'], inplace=True)
 
     return res
 
