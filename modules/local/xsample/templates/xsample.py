@@ -450,7 +450,8 @@ def xsample_ttest(df, group1, group2):
     res['statistic'] = test.statistic
     res['pval'] = test.pvalue
     padj = res['pval'].copy()
-    valid = ~np.isnan(res['pval'])
+    valid = ~np.isnan(res['pval']) & ~np.isinf(res['pval'])
+    valid = valid & ~np.isnan(res['statistic']) & ~np.isinf(res['statistic'])
     padj[valid] = sp.stats.false_discovery_control(res['pval'][valid], method='bh')
     res['pval_adj'] = padj
     res.sort_values('pval_adj', inplace=True)
