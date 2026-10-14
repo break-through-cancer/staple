@@ -18,7 +18,7 @@ workflow SPACEMARKERS {
         versions = versions.mix(SPACEMARKERS_CHECK.out.versions)
         ch_eligible = SPACEMARKERS_CHECK.out.checked
             .filter { _meta, _adata, eligible -> eligible.trim() == 'true' }
-            .map { meta, adata, _eligible -> [meta, adata] }
+            .map { meta, adata, _eligible -> [meta, adata, []] } //empty placeholder to match spacemarkers input
 
         SPACEMARKERS_RUN( ch_eligible, ch_omnipath )
         // IMScores: IMscores.rds with row names holding gene names, one column per pattern pair
