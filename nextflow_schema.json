@@ -434,6 +434,17 @@
         },
         "sm_spot_diameter": {
             "type": "string"
+        },
+        "om_interaction_params": {
+            "type": "string"
+        },
+        "om_transmitter_params": {
+            "type": "string",
+            "default": "{\"categories\": \"ligand\"}"
+        },
+        "om_receiver_params": {
+            "type": "string",
+            "default": "{\"categories\": \"receptor\"}"
         }
     }
 }
