@@ -65,7 +65,12 @@ QC module does not produce any output files, but the results of the QC checks ar
   - `<sample>/`
       - `<source>/`
         - `IMscores.rds`: SpaceMarkers interaction scores for genes (directed or undirected, see usage)
+        - `IMscores.rds.gz`: SpaceMarkers interaction in compressed csv format (gzip)
         - `LRscores.rds`: SpaceMarkers ligand-receptor interaction scores (directed mode only)
+        - `LRscores.rds.gz`: SpaceMarkers ligand-receptor interaction scores in compressed csv format (gzip)
+        - `smi.rds`: Native SpaceMarkerExperiment object
+- `omnipath/`
+  - `omnipath.csv`: ligand-receptor database used by SpaceMarkers and/or Squidpy to call ligand-receptor interactions.
 
 </details>
 
