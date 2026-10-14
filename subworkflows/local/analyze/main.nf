@@ -4,6 +4,7 @@ include { SQUIDPY_SPATIAL } from '../../../modules/local/squidpy/main'
 include { STAPLE_ATTACH_LIGREC } from '../../../modules/local/util/main'
 include { STAPLE_ATTACH_LIGREC as STAPLE_ATTACH_IMSCORES } from '../../../modules/local/util/main'
 include { STAPLE_ATTACH_LIGREC as STAPLE_ATTACH_LRSCORES } from '../../../modules/local/util/main'
+include { OMNIPATH_GET } from '../../../modules/local/util/main'
 
 
 workflow ANALYZE {
@@ -16,11 +17,18 @@ workflow ANALYZE {
     ligrec = channel.empty()
     imscores = channel.empty()
     lrscores = channel.empty()
+    omnipath = channel.empty()
 
+    // get interactions if needed
+    if (params.analyze.spacemarkers || params.analyze.squidpy){
+        OMNIPATH_GET()
+        versions = versions.mix(OMNIPATH_GET.out.versions)
+        omnipath = OMNIPATH_GET.out.db
+    }
 
     // ligrec - spacemarkers if requested
     if (params.analyze.spacemarkers){
-        SPACEMARKERS(ch_squidpy)
+        SPACEMARKERS(ch_squidpy, omnipath)
         versions = versions.mix(SPACEMARKERS.out.versions)
         // pass ligrec results along
         imscores = imscores.mix(SPACEMARKERS.out.imscores)
@@ -29,7 +37,7 @@ workflow ANALYZE {
 
     // ligrec - squidpy if requested
     if (params.analyze.squidpy){
-        SQUIDPY_LIGREC( ch_squidpy )
+        SQUIDPY_LIGREC( ch_squidpy, omnipath )
         versions = versions.mix(SQUIDPY_LIGREC.out.versions)
         ligrec = ligrec.mix(SQUIDPY_LIGREC.out.ligrec)
     }

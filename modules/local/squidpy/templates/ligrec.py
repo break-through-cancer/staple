@@ -9,8 +9,10 @@ import pickle
 from matplotlib import pyplot as plt
 import numpy as np
 from importlib.metadata import version
+import pandas as pd
 
-def default_ligrec(adata, par, **kwargs):
+
+def default_ligrec(adata, par, interactions, **kwargs):
     if "gene_symbols" in kwargs:
         gene_symbols = kwargs.pop("gene_symbols")
     else:
@@ -23,12 +25,10 @@ def default_ligrec(adata, par, **kwargs):
         copy=True,
         use_raw=False,
         corr_method="fdr_bh",
-        interactions_params=par["sq_gr_ligrec_interactions_params"],
-        transmitter_params={"categories": "ligand"},
-        receiver_params={"categories": "receptor"},
         alpha=par["sq_gr_ligrec_alpha"],
         gene_symbols=gene_symbols,
-        threshold=par["sq_gr_ligrec_threshold"])
+        threshold=par["sq_gr_ligrec_threshold"],
+        interactions=interactions)
 
     return ligrec
 
@@ -67,10 +67,10 @@ if __name__ == "__main__":
     log = logging.getLogger()
 
     adata_path = "${adata}"
+    interactions_path = "${omnipath}"
     sample = "${prefix}"
     process = "${task.process}"
     cpus = int("${task.cpus}")
-
 
     par = {"sq_gr_ligrec_threshold": float("${params.sq_gr_ligrec_threshold}"),
         "sq_gr_ligrec_alpha": float("${params.sq_gr_ligrec_alpha}"),
@@ -80,23 +80,25 @@ if __name__ == "__main__":
         "seed": int("${params.seed}")
     }
 
-    if '${params.sq_gr_ligrec_interactions_params}':
-        par["sq_gr_ligrec_interactions_params"] = json.loads('${params.sq_gr_ligrec_interactions_params}')
-    else:
-        par["sq_gr_ligrec_interactions_params"] = None
-
     log.info(f"received params:{par}")
     log.info(f"loading {adata_path}")
     adata = ad.read_h5ad(adata_path)
     log.info(f"adata is {adata}")
     
-    #get most abundant cell type from bayestme
+    # get most abundant cell type from bayestme
     if 'cell_type' not in adata.obs.columns and 'bayestme_cell_type_counts' in adata.obsm:
         log.info("cell_type {} not found in adata.obs, calculating from bayestme_cell_type_counts")
         most_abundant = np.argmax(adata.obsm['bayestme_cell_type_counts'], axis=1)
         adata.obs['cell_type'] = most_abundant
         adata.obs['cell_type'] = adata.obs['cell_type'].astype('category')
-        
+
+    # read interactions if provided
+    if interactions_path and os.path.exists(interactions_path):
+        log.info(f"loading interactions from {interactions_path}")
+        interactions = pd.read_csv(interactions_path)
+    else:
+        log.warning(f"interactions file {interactions_path} not found, proceeding without it")
+        interactions = None
 
     #squidpy insists on figure dir naming, not creating plot outdir as usually
     base_path = os.getcwd()
@@ -115,11 +117,11 @@ if __name__ == "__main__":
     # try running ligrec
     res = None
     try:
-        res = default_ligrec(adata, par)
+        res = default_ligrec(adata, par, interactions)
     except Exception as e:
         log.error(f"default ligrec failed: {e}")
         try:
-            res = default_ligrec(adata, par, gene_symbols="index")
+            res = default_ligrec(adata, par, interactions, gene_symbols="index")
         except Exception as e2:
             log.error(f"ligrec without gene_symbols failed: {e2}")
 
@@ -129,12 +131,6 @@ if __name__ == "__main__":
         log.info("ligrec completed successfully, saving to pickle")
         # dictionary of pandas frames: means, pvalues, metadata
         pickle.dump(res, open("ligrec_interactions.pickle", "wb"))
-
-        log.info("saving ligrec metadata")
-        # just metadata, as it's easy to comprehend, one row per interaction
-        res["metadata"].to_csv(
-            "ligrec_metadata.csv"
-        )
 
         log.info("saving ligrec interaction plot")
         for s in clusters:

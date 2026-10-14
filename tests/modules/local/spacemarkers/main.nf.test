@@ -18,7 +18,10 @@ nextflow_process {
             }
             process {
                 """
-                input[0] = [[id:"sample"], file("${projectDir}/tests/data/rctd.h5ad")]
+                input[0] = [[id:"sample"], 
+                            file("${projectDir}/tests/data/rctd.h5ad"), 
+                            []] //empty placeholder for features
+                input[1] = file("${projectDir}/tests/data/ligrec_db.csv")
                 """
             }
         }
@@ -45,7 +48,10 @@ nextflow_process {
             }
             process {
                 """
-                input[0] = [[id:"sample"], file("${projectDir}/tests/data/rctd.h5ad")]
+                input[0] = [[id:"sample"], 
+                            file("${projectDir}/tests/data/rctd.h5ad"), 
+                            []] //empty placeholder for features
+                input[1] = file("${projectDir}/tests/data/ligrec_db.csv")
                 """
             }
         }
@@ -72,7 +78,38 @@ nextflow_process {
             }
             process {
                 """
-                input[0] = [[id:"sample"], file("${projectDir}/tests/data/rctd.h5ad")]
+                input[0] = [[id:"sample"], 
+                            file("${projectDir}/tests/data/rctd.h5ad"), 
+                            []] //empty placeholder for features
+                input[1] = file("${projectDir}/tests/data/ligrec_db.csv")
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.IMscores
+        }
+    }
+    test("Should run with visium dir and features separately") {
+
+        tag "process"
+        tag "spacemarkers"
+        tag "features"
+
+        when {
+            params {
+                max_memory = '8.GB'
+                max_cpus   = 2
+                sm_directed = false
+                sm_spot_diameter = 90
+            }
+            process {
+                """
+                input[0] = [[id:"sample"], 
+                            file("${projectDir}/tests/data/visium"), 
+                            file("${projectDir}/tests/data/visium/visium_cellular_compositions.csv")]
+                input[1] = file("${projectDir}/tests/data/ligrec_db.csv")
                 """
             }
         }

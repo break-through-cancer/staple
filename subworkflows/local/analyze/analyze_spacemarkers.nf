@@ -8,6 +8,8 @@ workflow SPACEMARKERS {
 
     take:
         ch_adata   // [meta, h5ad] after cell typing
+        ch_omnipath
+
     main:
         versions = channel.empty()
 
@@ -18,7 +20,7 @@ workflow SPACEMARKERS {
             .filter { _meta, _adata, eligible -> eligible.trim() == 'true' }
             .map { meta, adata, _eligible -> [meta, adata] }
 
-        SPACEMARKERS_RUN( ch_eligible )
+        SPACEMARKERS_RUN( ch_eligible, ch_omnipath )
         // IMScores: IMscores.rds with row names holding gene names, one column per pattern pair
         // LRscores: LRscores.rds with ligand-receptor pairs as row names, directed mode only
         versions = versions.mix(SPACEMARKERS_RUN.out.versions)

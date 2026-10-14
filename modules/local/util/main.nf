@@ -514,3 +514,16 @@ process SPACEMARKERS_HARMONIZE {
     prefix = task.ext.prefix ?: "${meta.id}"
     template 'harmonize_spacemarkers.r'
 }
+
+process OMNIPATH_GET {
+    tag "omnipath"
+    label 'process_single'
+    container 'ghcr.io/break-through-cancer/btc-containers/scverse@sha256:ed44380c6e6e73fc575b743eba864941c26880053e50c3d70b5c9bfc526c0520'
+
+    output:
+        path("omnipath.csv"), emit: db
+        path("versions.yml"), emit: versions
+
+    script:
+    template 'get_omnipath.py'
+}
