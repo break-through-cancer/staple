@@ -392,7 +392,47 @@ nextflow_pipeline {
                 { assert file("${outputDir}/multiqc/multiqc_report.html").exists() }
             )
         }
+    }
 
+    test("Supply own list of ligand-receptor interactions") {
+        tag "pipeline"
+        tag "skip"
+        tag "own_ligrec"
+
+    when {
+            params {
+                input = "../../../tests/data/samplesheets/anndata-test.csv"
+                ref_ligrec = "../../../tests/data/ligrec_db.csv"
+                sm_directed = true
+                sq_gr_ligrec_nperms = 100
+                anndata = true
+                max_memory = "8.GB"
+                max_cpus = 1
+                umi_min = 10
+                deconvolve {
+                    bayestme = false
+                    cogaps = false
+                    rctd = true
+                    external = false
+                }
+                analyze {
+                    spacemarkers = false
+                    squidpy = true
+                    xsample = true
+                }
+                outdir = "output"
+            }
+        }
+        then {
+            assertAll (
+                { assert workflow.success
+                  assert file("${outputDir}/multiqc/multiqc_report.html").exists()
+                  assert file("${outputDir}/squidpy/sample1/rctd/ligrec/ligrec_db.csv").exists()
+                  //assert file("${outputDir}/spacemarkers/sample1/rctd/ligrec_db.csv").exists() too small of a dataset
+                  assert file("${outputDir}/staple").exists()
+                }
+            )
+        }
     }
 
 }

@@ -104,6 +104,8 @@ if __name__ == "__main__":
     base_path = os.getcwd()
     save_path = os.path.join(sample, "ligrec")
     os.makedirs(save_path, exist_ok=True)
+    if interactions is not None:
+        interactions.to_csv(os.path.join(save_path,os.path.basename(interactions_path)))
     os.chdir(save_path)
 
     #filter non-na cell_types

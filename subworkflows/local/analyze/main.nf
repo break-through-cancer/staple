@@ -17,18 +17,22 @@ workflow ANALYZE {
     ligrec = channel.empty()
     imscores = channel.empty()
     lrscores = channel.empty()
-    omnipath = channel.empty()
+    ligrec_db = channel.empty()
 
-    // get interactions if needed
+    // get interactions if needed: param suplied or get from omnipath
     if (params.analyze.spacemarkers || params.analyze.squidpy){
-        OMNIPATH_GET()
-        versions = versions.mix(OMNIPATH_GET.out.versions)
-        omnipath = OMNIPATH_GET.out.db
+        if (params.ref_ligrec) {
+            ligrec_db = file(params.ref_ligrec)
+        } else {
+            OMNIPATH_GET()
+            versions = versions.mix(OMNIPATH_GET.out.versions)
+            ligrec_db = OMNIPATH_GET.out.db
+        }
     }
 
     // ligrec - spacemarkers if requested
     if (params.analyze.spacemarkers){
-        SPACEMARKERS(ch_squidpy, omnipath)
+        SPACEMARKERS(ch_squidpy, ligrec_db)
         versions = versions.mix(SPACEMARKERS.out.versions)
         // pass ligrec results along
         imscores = imscores.mix(SPACEMARKERS.out.imscores)
@@ -37,7 +41,7 @@ workflow ANALYZE {
 
     // ligrec - squidpy if requested
     if (params.analyze.squidpy){
-        SQUIDPY_LIGREC( ch_squidpy, omnipath )
+        SQUIDPY_LIGREC( ch_squidpy, ligrec_db )
         versions = versions.mix(SQUIDPY_LIGREC.out.versions)
         ligrec = ligrec.mix(SQUIDPY_LIGREC.out.ligrec)
     }
@@ -51,10 +55,10 @@ workflow ANALYZE {
     if (params.analyze.squidpy){
         // remainder: keep samples whose ligrec output is missing (optional output / failed ignored)
         ch_with_ligrec = SQUIDPY_SPATIAL.out.adata.join(ligrec, remainder: true)
-        STAPLE_ATTACH_LIGREC(ch_with_ligrec.filter { it[2] != null })
+        STAPLE_ATTACH_LIGREC(ch_with_ligrec.filter { it -> it[2] != null })
         // samples without ligrec pass through unchanged
         attach_imscores_to = STAPLE_ATTACH_LIGREC.out.adata.mix(
-            ch_with_ligrec.filter { it-> it[2] == null }.map { meta, ad, _lr -> [meta, ad] }
+            ch_with_ligrec.filter { it -> it[2] == null }.map { meta, ad, _lr -> [meta, ad] }
         )
         adata = attach_imscores_to
     } else {
