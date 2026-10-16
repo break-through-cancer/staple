@@ -445,6 +445,9 @@
         "om_receiver_params": {
             "type": "string",
             "default": "{\"categories\": \"receptor\"}"
+        },
+        "ref_ligrec": {
+            "type": "string"
         }
     }
 }
