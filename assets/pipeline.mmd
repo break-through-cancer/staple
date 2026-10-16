@@ -1,0 +1,36 @@
+%%metro title: STAPLE
+%%metro style: dark
+%%metro line_order: span
+%%metro line: main | Main | #2db572
+%%metro line: qc | QC |  #ff6347
+%%metro line: report | Report | #1e90ff
+
+graph LR
+    subgraph pipeline []
+        input_check([Input Check])
+        load_dataset([Load Dataset])
+        deconvolve([Deconvolve])
+        analyze([Analyze])
+        staple_xsample([Xsample])
+        qc([Qc])
+        multiqc([Multiqc])
+
+        input_check -->|main| load_dataset
+        input_check -->|report| load_dataset
+        load_dataset -->|main| deconvolve
+        load_dataset -->|report| deconvolve
+        load_dataset -->|main| qc
+        load_dataset -->|qc| qc
+        deconvolve -->|main| analyze
+        deconvolve -->|main| qc
+        deconvolve -->|report| analyze
+        deconvolve -->|qc| qc
+        analyze -->|main| staple_xsample
+        analyze -->|main| multiqc
+        analyze -->|report| multiqc
+        staple_xsample -->|report| multiqc
+        staple_xsample -->|main| multiqc
+        qc -->|main| multiqc
+        qc -->|qc| multiqc
+    end
+

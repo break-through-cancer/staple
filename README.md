@@ -4,32 +4,7 @@
 
 **STAPLE** (Spatial Transcriptomics Analysis Pipeline) is a bioinformatics pipeline data that puts the scientific question first. Features are pre-computed on a per-sample basis, then contrasted across samples using metadata provided through the sample sheet, and finally combined in a comprehensive MultiQC report for downstream analysis compatible with LLMs. STAPLE reads 10X Visium, Visium HD, and Xenium ranger outputs, and can be also used with generic spatial Anndata inputs.
 
-
-```mermaid
-flowchart LR
-    v1([INPUT_CHECK])
-    v4([LOAD_DATASET])
-    v10([DECONVOLVE])
-    v16([ANALYZE])
-    v25([QC])
-    v31([MULTIQC])
-    v20([STAPLE_XSAMPLE])
-    v1 --> v4
-    v1 --> v10
-    v4 --> v10
-    v1 --> v16
-    v10 --> v16
-    v16 --> v20
-    v4 --> v25
-    v10 --> v25
-    v16 --> v31
-    v1 --> v31
-    v20 --> v31
-    v4 --> v31
-    v25 --> v31
-    v10 --> v31
-```
-
+![STAPLE Pipeline](assets/pipeline.svg)
 
 ## Usage
 
