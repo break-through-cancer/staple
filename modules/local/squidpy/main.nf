@@ -31,10 +31,11 @@ process SQUIDPY_LIGREC_ANALYSIS {
 
     input:
         tuple val(meta), path(adata)
+        path(omnipath)
     output:
         tuple val(meta), path("${prefix}/**.png"),                            emit: ligrec_plots, optional: true
         tuple val(meta), path("${prefix}/**ligrec_interactions.pickle"),      emit: ligrec_interactions, optional: true
-        tuple val(meta), path("${prefix}/**ligrec_metadata.csv"),             emit: ligrec_metadata, optional: true
+        tuple val(meta), path("${prefix}/ligrec/**.csv"),                     emit: ligrec_metadata, optional: true
         path "versions.yml",                                                  emit: versions
 
     script:
