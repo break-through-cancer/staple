@@ -53,13 +53,11 @@ workflow ANALYZE {
     // wrap up - collect results from tools and save
     // TODO: rewrite to collect ligrecs and join once
     if (params.analyze.squidpy){
-        // remainder: keep samples whose ligrec output is missing (optional output / failed ignored)
+        // remainder keeps samples without ligrec; [] stages no file so staple.h5ad is still written
         ch_with_ligrec = SQUIDPY_SPATIAL.out.adata.join(ligrec, remainder: true)
-        STAPLE_ATTACH_LIGREC(ch_with_ligrec.filter { it -> it[2] != null })
-        // samples without ligrec pass through unchanged
-        attach_imscores_to = STAPLE_ATTACH_LIGREC.out.adata.mix(
-            ch_with_ligrec.filter { it -> it[2] == null }.map { meta, ad, _lr -> [meta, ad] }
-        )
+            .map { meta, ad, lr -> [meta, ad, lr ?: []] }
+        STAPLE_ATTACH_LIGREC(ch_with_ligrec)
+        attach_imscores_to = STAPLE_ATTACH_LIGREC.out.adata
         adata = attach_imscores_to
     } else {
         attach_imscores_to = SQUIDPY_SPATIAL.out.adata
@@ -69,16 +67,13 @@ workflow ANALYZE {
 
     if (params.analyze.spacemarkers){
         ch_with_im = attach_imscores_to.join(imscores, remainder: true)
-        STAPLE_ATTACH_IMSCORES(ch_with_im.filter { it[2] != null })
-        attach_lrscores_to = STAPLE_ATTACH_IMSCORES.out.adata.mix(
-            ch_with_im.filter { it -> it[2] == null }.map { meta, ad, _im -> [meta, ad] }
-        )
-        adata = attach_lrscores_to
+            .map { meta, ad, im -> [meta, ad, im ?: []] }
+        STAPLE_ATTACH_IMSCORES(ch_with_im)
+        attach_lrscores_to = STAPLE_ATTACH_IMSCORES.out.adata
         ch_with_lr = attach_lrscores_to.join(lrscores, remainder: true)
-        STAPLE_ATTACH_LRSCORES(ch_with_lr.filter { it -> it[2] != null })
-        adata = STAPLE_ATTACH_LRSCORES.out.adata.mix(
-            ch_with_lr.filter { it -> it[2] == null }.map { meta, ad, _lr -> [meta, ad] }
-        )
+            .map { meta, ad, lr -> [meta, ad, lr ?: []] }
+        STAPLE_ATTACH_LRSCORES(ch_with_lr)
+        adata = STAPLE_ATTACH_LRSCORES.out.adata
     }
 
     emit:

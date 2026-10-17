@@ -59,7 +59,7 @@ nextflow_pipeline {
 
     test("Full pipeline on Anndata inputs and skip deconvolve") {
         tag "pipeline"
-        tag "skip"
+        tag "skip_deconvolve"
 
     when {
             params {
@@ -88,6 +88,7 @@ nextflow_pipeline {
                   assert file("${outputDir}/multiqc/multiqc_report.html").exists()
                   assert file("${outputDir}/squidpy").exists()
                   assert file("${outputDir}/staple").exists()
+                  assert file("${outputDir}/staple/sample_0/staple.h5ad").exists()
                   assert !file("${outputDir}/rctd").exists()
                   assert !file("${outputDir}/cogaps").exists()
                   assert !file("${outputDir}/external").exists()
@@ -396,7 +397,6 @@ nextflow_pipeline {
 
     test("Supply own list of ligand-receptor interactions") {
         tag "pipeline"
-        tag "skip"
         tag "own_ligrec"
 
     when {
