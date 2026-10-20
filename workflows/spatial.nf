@@ -112,12 +112,12 @@ workflow STAPLE {
     // MultiQC
     // NOTE - will fail to find spaceranger reports unless the full path is provided
     // multiqc does not find spaceranger report for VisiumHD, address with #24
-    def multiqc_config = file(params.multiqc_config).exists() ? file(params.multiqc_config) : []
+    def custom_config = file(params.multiqc_config).exists() ? file(params.multiqc_config) : []
     MULTIQC(
         ch_multiqc_files
             .collect()
             .ifEmpty([])
-            .map { files -> [[id: 'multiqc'], files, multiqc_config, [], [], []] }
+            .map { files -> [[id: 'multiqc'], files, ["${baseDir}/assets/multiqc_config.yml", custom_config],[], [],[]] }
     )
     multiqc_report = MULTIQC.out.report.map { it -> it[1] }.toList()
 
