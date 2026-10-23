@@ -104,7 +104,9 @@ def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, t
     if tool == 'squidpy_ligrec' and only_spatial:
         memo += " Only interactions with at least 1 spatially variable genes included."
 
-    res_show = res[samples][:show]
+    #safely select samples also when some are not available
+    avail = [s for s in samples if s in res.columns]
+    res_show = res[avail][:show]
     res_dict = res_show.to_dict()
     res_dict = dict(sorted(res_dict.items(), key=lambda item: item[0]))
     if var:
@@ -445,16 +447,16 @@ def plot_hist(df_pair, title=None, save=True):
         plt.savefig(title.replace(" ", "_")+".png", dpi=300, bbox_inches='tight')
 
 def xsample_ttest(df, group1, group2):
-    res = df.copy()
+    res = df[group1+group2].copy()
     test = sp.stats.ttest_ind(res[group1], res[group2], axis=1, nan_policy='omit')
     res['statistic'] = test.statistic
     res['pval'] = test.pvalue
-    padj = res['pval'].copy()
-    valid = ~np.isnan(res['pval'])
+    padj = np.nan * np.ones_like(res['pval'])
+    valid = np.isfinite(res['pval']) & np.isfinite(res['statistic'])
     padj[valid] = sp.stats.false_discovery_control(res['pval'][valid], method='bh')
     res['pval_adj'] = padj
     res.sort_values('pval_adj', inplace=True)
-    res.dropna(subset=['pval','pval_adj'], inplace=True)
+    res.dropna(subset=['statistic','pval','pval_adj'], inplace=True)
 
     return res
 

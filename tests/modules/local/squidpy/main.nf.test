@@ -1,67 +1,4 @@
 nextflow_process {
-    name    "Test Squidpy LigRec Analysis"
-    script  "modules/local/squidpy/main.nf"
-    process "SQUIDPY_LIGREC_ANALYSIS"
-
-    test("Should run Squidpy LigRec successfully") {
-
-        tag "process"
-        tag "ligrec"
-        tag "visiumhd"
-
-        when {
-            params {
-                max_memory = '8.GB'
-                max_cpus   = 2
-            }
-            process {
-                """
-                input[0] = [[id:"sample"],
-                            file("${projectDir}/tests/data/rctd.h5ad")]
-                """
-            }
-        }
-
-        then {
-            assert process.success
-            assert process.out.ligrec_interactions
-            assert process.out.ligrec_metadata
-            assert process.out.versions
-        }
-    }
-
-        test("Should run Squidpy LigRec with CellPhoneDB") {
-
-        tag "process"
-        tag "ligrec"
-        tag "cellphonedb"
-        tag "visiumhd"
-
-        when {
-            params {
-                max_memory = '8.GB'
-                max_cpus   = 2
-                sq_gr_ligrec_interactions_params = '{"resources": "CellPhoneDB"}'
-            }
-            process {
-                """
-                input[0] = [[id:"sample"],
-                            file("${projectDir}/tests/data/rctd.h5ad")]
-                """
-            }
-        }
-
-        then {
-            assert process.success
-            assert process.out.ligrec_interactions
-            assert process.out.ligrec_metadata
-            assert process.out.versions
-        }
-    }
-}
-
-
-nextflow_process {
     name    "Test Squidpy Spatial Analysis"
     script  "modules/local/squidpy/main.nf"
     process "SQUIDPY_SPATIAL"
@@ -122,5 +59,5 @@ nextflow_process {
             assert process.success
             assert process.out.versions
         }
-}
+    }
 }

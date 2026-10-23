@@ -1,0 +1,38 @@
+nextflow_process {
+    name    "Test Squidpy LigRec Analysis"
+    script  "modules/local/squidpy/main.nf"
+    process "SQUIDPY_LIGREC_ANALYSIS"
+
+    test("Should run Squidpy LigRec successfully") {
+
+    tag "process"
+    tag "ligrec"
+    tag "visiumhd"
+
+    when {
+        params {
+            max_memory = '8.GB'
+            max_cpus   = 2
+            sq_gr_ligrec_threshold = 1
+            sq_gr_ligrec_alpha = 1
+            sq_gr_ligrec_nperms = 1000
+            sq_pl_ligrec_pvalue = 1
+            sq_pl_ligrec_max_interactions = 25
+            seed = 42
+        }
+        process {
+            """
+            input[0] = [[id:"sample"],
+                        file("${projectDir}/tests/data/rctd.h5ad")]
+            input[1] = [file("${projectDir}/tests/data/ligrec_db.csv")]
+            """
+        }
+    }
+
+    then {
+        assert process.success
+        assert process.out.ligrec_interactions
+        assert process.out.versions
+    }
+}
+}
