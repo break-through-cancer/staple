@@ -104,7 +104,9 @@ def heatmap_report(adatas, spotlight=None, groups=None, show=100, filter=0.05, t
     if tool == 'squidpy_ligrec' and only_spatial:
         memo += " Only interactions with at least 1 spatially variable genes included."
 
-    res_show = res[samples][:show]
+    #safely select samples also when some are not available
+    avail = [s for s in samples if s in res.columns]
+    res_show = res[avail][:show]
     res_dict = res_show.to_dict()
     res_dict = dict(sorted(res_dict.items(), key=lambda item: item[0]))
     if var:
