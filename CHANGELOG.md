@@ -3,6 +3,48 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v2.6.0 - 2026-10-26
+
+### `Added`
+- custom ligand-receptor interaction databases and MultiQC configuration
+- OmniPath support for SpaceMarkers ligand-receptor analysis
+- filter interactions db based on a query to any field
+
+### `Fixed`
+- SpaceMarkers input handling and empty ligand-receptor results
+- t-test result formatting and MultiQC sample selection
+
+## v2.5.0 - 2026-10-06
+
+### `Added`
+- option to skip deconvolution
+- support for custom prompts and improved MultiQC reporting
+
+## v2.4.2 - 2026-09-25
+
+### `Added`
+- improved custom prompting and cross-sample reporting
+
+## v2.4.1 - 2026-09-14
+
+### `Fixed`
+- spotlight mode and cross-sample analysis issues
+
+## v2.3.1 - 2026-08-28
+
+### `Added`
+- ignore self-neighbors by default in cross-sample analysis
+
+## v2.3.0 - 2026-07-27
+
+### `Added`
+- support for local reference atlases and additional input formats
+- ligand-receptor database selection and mitochondrial gene filtering
+- expanded cross-sample analysis and MultiQC reporting
+
+### `Fixed`
+- RCTD doublet-mode fallback and neighbor reports for absent cell types
+
 ## v2.2.0 - 2025-11-23
 
 ### `Added`
