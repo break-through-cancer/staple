@@ -34,7 +34,7 @@ nextflow_process {
             params {
                 max_memory = '4.GB'
                 max_cpus   = 1
-                params.om_interaction_params = '{"resources":"CellPhoneDB"}'
+                params.om_interaction_params = '{"resources":["CellChatDB","CellPhoneDB"]}'
                 params.om_receiver_params = '{"category":"receptor"}'
                 params.om_transmitter_params = '{"category":"ligand"}'
             }
@@ -46,6 +46,55 @@ nextflow_process {
             assert process.success
             assert process.out.versions
             assert process.out.db
+        }
+    }
+
+    test("Should run OMNIPATH_GET successfully with interaction query") {
+
+        tag "process"
+        tag "omnipath"
+        tag "util"
+
+        when {
+            params {
+                max_memory = '4.GB'
+                max_cpus   = 1
+                params.om_interaction_params = '{"resources":["CellChatDB","CellPhoneDB"]}'
+                params.om_receiver_params = '{"category":"receptor"}'
+                params.om_transmitter_params = '{"category":"ligand"}'
+                params.om_interaction_query = 'curation_effort > 5'
+            }
+            process {
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.versions
+            assert process.out.db
+        }
+    }
+
+    test("Should keep unfiltered interactions when query matches none") {
+
+        tag "process"
+        tag "omnipath"
+        tag "util"
+
+        when {
+            params {
+                max_memory = '4.GB'
+                max_cpus   = 1
+                params.om_interaction_query = 'curation_effort > 999999'
+            }
+            process {
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.versions
+            assert new File(process.out.db.get(0)).text.readLines().size() > 1
         }
     }
 }

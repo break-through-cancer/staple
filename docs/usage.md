@@ -150,16 +150,21 @@ Control SpaceMarkers:
 ```
 
 
-Control squidpy [ligand-receptor interaction](https://squidpy.readthedocs.io/en/stable/notebooks/examples/graph/compute_ligrec.html) parameters:
+Control Omnipath db parameters:
 
 Run on mouse data (or any other organism via ortholog conversion):
 ```bash
---sq_gr_ligrec_interactions_params '{"organism":"10090"}'
+--om_interaction_params '{"organism":"10090"}'
 ```
 
 Use only CellPhoneDB:
 ```bash
---sq_gr_ligrec_interactions_params '{"resources": "CellPhoneDB"}'
+--om_interaction_params '{"resources": "CellPhoneDB"}'
+```
+
+Filter any interactions field based on a query:
+```bash
+--om_interaction_query 'curation_effort > 5'
 ```
 
 ### Updating the pipeline

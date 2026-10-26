@@ -10,6 +10,7 @@ if __name__ == "__main__":
     interactions_params = json.loads('${params.om_interaction_params}') if '${params.om_interaction_params}' else None
     receiver_params = json.loads('${params.om_receiver_params}') if '${params.om_receiver_params}' else None
     transmitter_params = json.loads('${params.om_transmitter_params}') if '${params.om_transmitter_params}' else None
+    interaction_query = '${params.om_interaction_query}' if '${params.om_interaction_query}' else None
 
     # Fetch the default intercell/ligand-receptor network used by Squidpy
     log.info("Fetching Omnipath intercell network...")
@@ -27,6 +28,23 @@ if __name__ == "__main__":
 
     # sort to keep source and target as first two columns
     interactions = interactions[["source", "target"] + [col for col in interactions.columns if col not in ["source", "target"]]]
+    
+    #apply additional filters if requested
+    if interaction_query:
+        try:
+            filtered_interactions = interactions.query(interaction_query)
+            if filtered_interactions.empty:
+                log.warning(
+                    f"No interactions left after applying query '{interaction_query}'; "
+                    "keeping unfiltered interactions."
+                )
+            else:
+                interactions = filtered_interactions
+        except Exception as e:
+            log.warning(
+                f"Failed to apply custom interaction query '{interaction_query}': {e}; "
+                "keeping unfiltered interactions."
+            )
 
     # Save to CSV
     log.info(f"Saving {len(interactions)} interactions to omnipath.csv...")
