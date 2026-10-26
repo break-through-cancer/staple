@@ -1,0 +1,53 @@
+nextflow_process {
+    name    "Test SPACEMARKERS_CHECK"
+    script  "modules/local/util/main.nf"
+    process "SPACEMARKERS_CHECK"
+
+    test("Should accept adata with latent features") {
+
+        tag "process"
+        tag "spacemarkers"
+
+        when {
+            params {
+                analyze {
+                    sm_patterns_uns = 'cell_type_composition'
+                }
+            }
+            process {
+                """
+                input[0] = [[id:"sample"], file("${projectDir}/tests/data/rctd.h5ad")]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.checked[0][2].trim() == 'true'
+        }
+    }
+
+    test("Should reject adata without latent features") {
+
+        tag "process"
+        tag "spacemarkers"
+
+        when {
+            params {
+                analyze {
+                    sm_patterns_uns = 'cell_type_composition'
+                }
+            }
+            process {
+                """
+                input[0] = [[id:"sample"], file("${projectDir}/tests/data/skip_deconvolve/sample_0_adata.h5ad")]
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert process.out.checked[0][2].trim() == 'false'
+        }
+    }
+}

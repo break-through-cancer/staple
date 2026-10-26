@@ -56,7 +56,9 @@ if __name__ == "__main__":
     log.info(f"attaching ligand-receptor results to adata.uns")
     adata = ad.read_h5ad(adata_path)
     
-    if "pickle" in ligrec_path:
+    if not ligrec_path:
+        log.warning("no ligand-receptor results available, writing adata unchanged")
+    elif "pickle" in ligrec_path:
         adata = attach_squidpy_ligrec(adata, ligrec_path)
     else:
         adata = attach_spacemarkers_ligrec(adata, ligrec_path)

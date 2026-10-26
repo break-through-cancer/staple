@@ -75,10 +75,6 @@ workflow STAPLE {
     ch_report = ch_report.mix( DECONVOLVE.out.ch_deconvolved.map {it -> [it.meta, it.obj, 'adata_counts']} ) //cell type counts
     ch_report = ch_report.mix( DECONVOLVE.out.ch_deconvolved.map {it -> [it.meta, it.obj, 'cell_probs']} )   //cell probs report
 
-    ch_sm_inputs = DECONVOLVE.out.ch_deconvolved
-                .map { it -> [it.meta, it.cell_probs?:it.obj] }
-                .combine( ch_datasets.map { it -> [it.meta, it.data_directory] }, by:0 )
-
     // Filter deconvolved results to get anndata objects for squidpy spatial plots and ligand-receptor analysis
     ch_squidpy = DECONVOLVE.out.ch_deconvolved
                         .filter { it -> it.obj != null }
@@ -86,7 +82,7 @@ workflow STAPLE {
                         .map { it-> [it.meta, it.obj] }
 
     // Analyze
-    ANALYZE ( ch_sm_inputs, ch_squidpy )
+    ANALYZE ( ch_squidpy )
     versions = versions.mix(ANALYZE.out.versions)
 
     // Cross-sample analysis
@@ -116,12 +112,12 @@ workflow STAPLE {
     // MultiQC
     // NOTE - will fail to find spaceranger reports unless the full path is provided
     // multiqc does not find spaceranger report for VisiumHD, address with #24
-    def multiqc_config = file(params.multiqc_config).exists() ? file(params.multiqc_config) : []
+    def custom_config = file(params.multiqc_config).exists() ? file(params.multiqc_config) : []
     MULTIQC(
         ch_multiqc_files
             .collect()
             .ifEmpty([])
-            .map { files -> [[id: 'multiqc'], files, multiqc_config, [], [], []] }
+            .map { files -> [[id: 'multiqc'], files, ["${baseDir}/assets/multiqc_config.yml", custom_config],[], [],[]] }
     )
     multiqc_report = MULTIQC.out.report.map { it -> it[1] }.toList()
 
