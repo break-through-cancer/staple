@@ -195,8 +195,8 @@ MultiQC includes built-in support for requesting AI summaries for your analysis 
 
 1. Install the required local AI model server. For example, [Ollama](https://ollama.com/download/mac).
 2. In MultiQC, report side panel, select "Custom" in the AI provider dropdown and enter `http://localhost:11434/v1/chat/completions` as the endpoint URL.
-3. Specify the model, for example `gemma4:latest`.
-4. Once configured, allow Ollama to to be queried from your browser, for example `export OLLAMA_ORIGINS="*"` and then start the server with `ollama serve` in the same terminal session.
+3. Choose a local model and enter its exact name in MultiQC. After starting the server in step 4, download that model with `ollama pull <model-name>` in a second terminal before requesting a summary.
+4. Serve the report from a trusted local HTTP origin and allow that origin in Ollama. For example, if you serve and open the report at `http://localhost:8000`, run `export OLLAMA_ORIGINS="http://localhost:8000"`, then start the server with `ollama serve` in the same terminal session. Avoid `OLLAMA_ORIGINS="*"`, which allows requests from arbitrary websites.
 
 ## Arguments
 
