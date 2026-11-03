@@ -189,6 +189,15 @@ To further assist in reproducbility, you can use share and re-use [parameter fil
 If you wish to share such profile (such as upload as supplementary material for academic publications), make sure to NOT include cluster specific paths to files, nor institutional specific profiles.
 :::
 
+### Setup local AI for interpretation
+
+MultiQC includes built-in support for requesting AI summaries for your analysis results. This allows you to leverage AI-driven insights directly within the MultiQC reports, providing additional interpretation and context for your data. It actually very easy to set up local models for this purpose, so no data is sent outside your local environment.
+
+1. Install the required local AI model server. For example, [Ollama](https://ollama.com/download/mac).
+2. In MultiQC, report side panel, select "Custom" in the AI provider dropdown and enter `http://localhost:11434/v1/chat/completions` as the endpoint URL.
+3. Choose a local model and enter its exact name in MultiQC. After starting the server in step 4, download that model with `ollama pull <model-name>` in a second terminal before requesting a summary.
+4. Serve the report from a trusted local HTTP origin and allow that origin in Ollama. For example, if you serve and open the report at `http://localhost:8000`, run `export OLLAMA_ORIGINS="http://localhost:8000"`, then start the server with `ollama serve` in the same terminal session. Avoid `OLLAMA_ORIGINS="*"`, which allows requests from arbitrary websites.
+
 ## Arguments
 
 ### Pipeline
