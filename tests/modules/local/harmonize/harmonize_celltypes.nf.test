@@ -9,8 +9,8 @@ nextflow_process {
     test("Should harmonize multiple samples with consistent cell type naming") {
         
         when {
-            max_memory = "8.GB"
             params {
+            max_memory = "8.GB"
                 harmonize {
                     enabled = true
                     method = "hierarchical"
