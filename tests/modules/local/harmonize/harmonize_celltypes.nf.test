@@ -1,0 +1,86 @@
+nextflow_process {
+
+    name "Test HARMONIZE_CELL_TYPES"
+    script "modules/local/util/main.nf"
+    process "HARMONIZE_CELL_TYPES"
+    tag "process"
+    tag "harmonize"
+
+    test("Should harmonize multiple samples with consistent cell type naming") {
+        
+        when {
+            params {
+                harmonize {
+                    enabled = true
+                    method = "hierarchical"
+                    cut_height = 0.3
+                    min_samples_per_cluster = 2
+                    confidence_threshold = 0.7
+                }
+            }
+            process {
+                """
+                input[0] = '''${projectDir}/tests/data/harmonize/sample1_celltypes.csv
+${projectDir}/tests/data/harmonize/sample2_celltypes.csv
+${projectDir}/tests/data/harmonize/sample3_celltypes.csv'''
+                input[1] = "sample1,sample2,sample3"
+                input[2] = 0.3
+                input[3] = 2
+                input[4] = 0.7
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.mapping[0]).exists() },
+                { assert path(process.out.consensus[0]).exists() },
+                { assert path(process.out.diagnostics[0]).exists() }
+            )
+
+            // Verify mapping file has correct structure
+            def mapping = path(process.out.mapping[0]).text
+            assert mapping.contains("original_cell_type")
+            assert mapping.contains("harmonized_cell_type")
+            assert mapping.contains("sample1.")
+            assert mapping.contains("sample2.")
+            assert mapping.contains("sample3.")
+        }
+    }
+
+    test("Should handle single sample gracefully") {
+        
+        when {
+            params {
+                harmonize {
+                    enabled = true
+                    method = "hierarchical"
+                    cut_height = 0.3
+                    min_samples_per_cluster = 1
+                    confidence_threshold = 0.7
+                }
+            }
+            process {
+                """
+                input[0] = "${projectDir}/tests/data/harmonize/sample1_celltypes.csv"
+                input[1] = "sample1"
+                input[2] = 0.3
+                input[3] = 1
+                input[4] = 0.7
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.mapping[0]).exists() }
+            )
+            
+            // Verify mapping exists
+            def mapping = path(process.out.mapping[0]).text
+            assert mapping.contains("sample1.")
+        }
+    }
+}

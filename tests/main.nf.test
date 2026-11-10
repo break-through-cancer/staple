@@ -435,4 +435,46 @@ nextflow_pipeline {
         }
     }
 
+    test("CoGAPS on Multisample Visium SD with cell type harmonization") {
+
+        tag "multisample"
+        tag "harmonize"
+        tag "pipeline"
+        when {
+            params {
+                input = "../../../tests/data/samplesheets/multisample-test.csv"
+                max_memory = "8.GB"
+                max_cpus = 4
+                outdir = "output"
+                deconvolve {
+                    bayestme = false
+                    cogaps = true
+                    rctd = false
+                }
+                harmonize {
+                    enabled = true
+                    method = "hierarchical"
+                    cut_height = 0.3
+                    min_samples_per_cluster = 2
+                    confidence_threshold = 0.7
+                }
+                analyze {
+                    spacemarkers = false
+                    squidpy = true
+                    xsample = true
+                }
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert file("${outputDir}/multiqc/multiqc_report.html").exists() },
+                { assert file("${outputDir}/harmonization/cell_type_mapping.csv").exists() },
+                { assert file("${outputDir}/harmonization/consensus_patterns.csv").exists() },
+                { assert file("${outputDir}/harmonization/harmonization_diagnostics.json").exists() }
+            )
+        }
+    }
+
 }

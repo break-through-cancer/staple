@@ -253,6 +253,43 @@
                 }
             }
         },
+        "harmonize": {
+            "type": "object",
+            "description": "Cell type harmonization for reference-free deconvolution",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable cross-sample cell type harmonization (multi-sample reference-free only)"
+                },
+                "method": {
+                    "type": "string",
+                    "default": "hierarchical",
+                    "description": "Harmonization method",
+                    "enum": ["hierarchical"]
+                },
+                "cut_height": {
+                    "type": "number",
+                    "default": 0.3,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Dendrogram cut height for clustering (0.2-0.3: aggressive, 0.4-0.5: moderate, 0.6+: conservative)"
+                },
+                "min_samples_per_cluster": {
+                    "type": "integer",
+                    "default": 2,
+                    "minimum": 1,
+                    "description": "Minimum samples required to form valid harmonized cell type"
+                },
+                "confidence_threshold": {
+                    "type": "number",
+                    "default": 0.7,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Minimum correlation to cluster consensus (for QC scoring)"
+                }
+            }
+        },
         "analyze": {
             "type": "object",
             "description": "Analysis methods to run",
