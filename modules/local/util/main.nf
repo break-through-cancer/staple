@@ -550,7 +550,7 @@ process HARMONIZE_CELL_TYPES {
         path("versions.yml"), emit: versions
 
     script:
-    template 'harmonize_celltypes_frompaths.py'
+    template 'harmonize_celltypes.py'
 }
 
 process ATTACH_HARMONIZED_LABELS {
