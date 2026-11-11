@@ -154,8 +154,15 @@ if cluster_consensus:
         np.column_stack([cluster_consensus[cid] for cid in sorted(valid_clusters)]),
         columns=[f"C{cid:03d}" for cid in sorted(valid_clusters)]
     )
-    consensus_df.to_csv('consensus_patterns.csv')
+else:
+    # Create empty dataframe when no valid clusters
+    consensus_df = pd.DataFrame()
+    
+consensus_df.to_csv('consensus_patterns.csv')
+if len(consensus_df) > 0:
     log.info(f"saved {len(consensus_df.columns)} consensus patterns")
+else:
+    log.info("no consensus patterns (no valid clusters)")
 
 # diagnostics
 log.info("creating diagnostics")
