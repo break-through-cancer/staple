@@ -533,7 +533,7 @@ process HARMONIZE_CELL_TYPES {
     tag "cross_sample"
     label "process_medium"
     container "ghcr.io/break-through-cancer/btc-containers/scverse@sha256:ed44380c6e6e73fc575b743eba864941c26880053e50c3d70b5c9bfc526c0520"
-    publishDir "${params.outdir}/harmonization", mode: 'copy', pattern: '*.{csv,json,png}'
+    publishDir "${params.outdir}/harmonize", mode: 'copy', pattern: '*.{csv,json,png}'
 
     input:
         val(file_paths_str)         // newline-separated paths as a string
