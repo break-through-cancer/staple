@@ -101,7 +101,9 @@ log.info(f"after filtering: {len(valid_clusters)} valid clusters")
 # generate mappings
 log.info("generating harmonized cell type names")
 mappings = []
+mapped_pattern_indices = set()
 
+# First, add mappings for valid clusters only
 for cluster_id in sorted(valid_clusters):
     cluster_patterns = [i for i, c in enumerate(clusters) if c == cluster_id]
     cluster_pattern_names = [pattern_names[i] for i in cluster_patterns]
@@ -126,7 +128,7 @@ for cluster_id in sorted(valid_clusters):
 
     harmonized_name = f"C{cluster_id:03d}"
 
-    for pattern_name, confidence in zip(cluster_pattern_names, confidences):
+    for pattern_idx, (pattern_name, confidence) in enumerate(zip(cluster_pattern_names, confidences)):
         if confidence >= confidence_threshold:
             mappings.append({
                 'original_cell_type': pattern_name,
@@ -135,6 +137,36 @@ for cluster_id in sorted(valid_clusters):
                 'confidence': confidence,
                 'composition': composition_str
             })
+        
+        # Mark this pattern as mapped (belongs to a valid cluster)
+        mapped_pattern_indices.add(cluster_patterns[pattern_idx])
+
+# Add patterns from invalid clusters as unique types (not meeting min_samples threshold)
+next_unique_id = 1000
+all_cluster_ids = np.unique(clusters)
+invalid_clusters = [cid for cid in all_cluster_ids if int(cid) not in valid_clusters]
+
+for cluster_id in sorted(invalid_clusters):
+    cluster_patterns = [i for i, c in enumerate(clusters) if c == cluster_id]
+    
+    for pattern_idx in cluster_patterns:
+        if pattern_idx not in mapped_pattern_indices:
+            pattern_name = pattern_names[pattern_idx]
+            sample_name = pattern_name.split('.')[0]
+            
+            mappings.append({
+                'original_cell_type': pattern_name,
+                'harmonized_cell_type': f"U{next_unique_id:03d}",
+                'cluster': None,
+                'confidence': 1.0,
+                'composition': f"{sample_name}:1"
+            })
+            next_unique_id += 1
+            mapped_pattern_indices.add(pattern_idx)
+
+n_unique = len([m for m in mappings if m['cluster'] is None])
+if n_unique > 0:
+    log.info(f"added {n_unique} unique pattern mappings from invalid clusters")
 
 mapping_df = pd.DataFrame(mappings)
 mapping_df.to_csv('cell_type_mapping.csv', index=False)
@@ -149,10 +181,30 @@ for cluster_id in sorted(valid_clusters):
     consensus = np.mean(cluster_pattern_vectors, axis=0)
     cluster_consensus[cluster_id] = consensus
 
-if cluster_consensus:
+consensus_cols = []
+consensus_data = []
+
+# Add consensus for valid clusters
+for cluster_id in sorted(valid_clusters):
+    consensus_cols.append(f"C{cluster_id:03d}")
+    consensus_data.append(cluster_consensus[cluster_id])
+
+# Add individual patterns from invalid clusters as unique consensus types
+next_unique_id = 1000
+all_cluster_ids = np.unique(clusters)
+invalid_clusters = [cid for cid in all_cluster_ids if int(cid) not in valid_clusters]
+
+for cluster_id in sorted(invalid_clusters):
+    cluster_patterns = [i for i, c in enumerate(clusters) if c == cluster_id]
+    for pattern_idx in cluster_patterns:
+        consensus_cols.append(f"U{next_unique_id:03d}")
+        consensus_data.append(all_patterns[pattern_idx])
+        next_unique_id += 1
+
+if consensus_data:
     consensus_df = pd.DataFrame(
-        np.column_stack([cluster_consensus[cid] for cid in sorted(valid_clusters)]),
-        columns=[f"C{cid:03d}" for cid in sorted(valid_clusters)]
+        np.column_stack(consensus_data),
+        columns=consensus_cols
     )
 else:
     # Create empty dataframe when no valid clusters
