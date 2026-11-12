@@ -553,7 +553,7 @@ process HARMONIZE_CELL_TYPES {
     template 'harmonize_celltypes.py'
 }
 
-process ATTACH_HARMONIZED_LABELS {
+process STAPLE_ATTACH_HARMONIZE {
     //Apply harmonized cell type names to an adata object
     tag "$meta.id"
     label "process_medium"
@@ -563,7 +563,7 @@ process ATTACH_HARMONIZED_LABELS {
         tuple val(meta), path(adata), path(harmonization_mapping), val(source)
 
     output:
-        tuple val(meta), path("${prefix}/adata_harmonized.h5ad"), emit: adata
+        tuple val(meta), path("${prefix}/staple.h5ad"), emit: adata
         path("versions.yml"), emit: versions
 
     script:

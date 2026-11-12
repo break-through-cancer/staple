@@ -1,5 +1,5 @@
 include { HARMONIZE_CELL_TYPES } from '../../../modules/local/util/'
-include { ATTACH_HARMONIZED_LABELS } from '../../../modules/local/util/'
+include { STAPLE_ATTACH_HARMONIZE } from '../../../modules/local/util/'
 
 workflow HARMONIZE {
     take:
@@ -47,12 +47,12 @@ workflow HARMONIZE {
             tuple(meta, adata, mapping, "cogaps")
         }
     
-    ATTACH_HARMONIZED_LABELS(ch_with_mapping)
-    versions = versions.mix(ATTACH_HARMONIZED_LABELS.out.versions)
+    STAPLE_ATTACH_HARMONIZE(ch_with_mapping)
+    versions = versions.mix(STAPLE_ATTACH_HARMONIZE.out.versions)
     
     // Emit updated deconvolved channel with harmonized adatas
     // Format: [meta, cell_probs, obj] (same as input)
-    ch_harmonized = ATTACH_HARMONIZED_LABELS.out.adata
+    ch_harmonized = STAPLE_ATTACH_HARMONIZE.out.adata
         .map { meta, adata -> 
             [meta: meta, cell_probs: null, obj: adata]
         }
