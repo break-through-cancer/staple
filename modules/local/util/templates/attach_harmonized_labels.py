@@ -60,23 +60,28 @@ if __name__ == "__main__":
             confidence_dict[pattern_name] = row['correlation_to_consensus']
 
     # apply mapping
-    cell_type_col = f'{source}_cell_type'
+    # The column is always named 'cell_type' regardless of the deconvolution method
+    cell_type_col = 'cell_type'
     log.info(f"looking for column: {cell_type_col}")
 
     if cell_type_col not in adata.obs.columns:
         log.warning(f"column {cell_type_col} not found in adata.obs")
         log.warning(f"available columns: {list(adata.obs.columns)}")
     else:
-        # backup original names
-        adata.obs[f'{cell_type_col}_original'] = adata.obs[cell_type_col].copy()
+        # backup original names (convert to string to preserve values)
+        adata.obs[f'{cell_type_col}_original'] = adata.obs[cell_type_col].astype(str)
+
+        # convert cell_type column to string to allow new harmonized values
+        original_values = adata.obs[cell_type_col].astype(str)
 
         # apply harmonized mapping
-        harmonized = adata.obs[cell_type_col].map(orig_to_harmonized)
+        harmonized = original_values.map(orig_to_harmonized)
 
         n_unmapped = harmonized.isna().sum()
         if n_unmapped > 0:
             log.warning(f"{n_unmapped} cells with unmapped cell types")
-            harmonized = harmonized.fillna(adata.obs[cell_type_col])
+            # Keep original values for unmapped cells
+            harmonized = harmonized.fillna(original_values)
 
         adata.obs[cell_type_col] = harmonized
         log.info(f"updated {cell_type_col} with {adata.obs[cell_type_col].nunique()} harmonized types")
@@ -88,9 +93,26 @@ if __name__ == "__main__":
         n_conf = (~adata.obs[f'{cell_type_col}_confidence'].isna()).sum()
         log.info(f"added confidence scores to {n_conf} cells")
 
+    # harmonize cell_type_composition columns if present
+    if 'cell_type_composition' in adata.uns:
+        comp_df = adata.uns['cell_type_composition']
+        log.info(f"harmonizing cell_type_composition columns: {list(comp_df.columns)}")
+        
+        # rename columns based on the mapping
+        new_columns = {}
+        for col in comp_df.columns:
+            if col in orig_to_harmonized:
+                new_columns[col] = orig_to_harmonized[col]
+            else:
+                log.warning(f"column {col} not in mapping, keeping original name")
+                new_columns[col] = col
+        
+        adata.uns['cell_type_composition'] = comp_df.rename(columns=new_columns)
+        log.info(f"updated cell_type_composition columns to: {list(adata.uns['cell_type_composition'].columns)}")
+
     # save output
-    log.info(f"saving to {prefix}/adata_harmonized.h5ad")
-    adata.write_h5ad(f"{prefix}/adata_harmonized.h5ad", compression='gzip')
+    log.info(f"saving to {prefix}/staple.h5ad")
+    adata.write_h5ad(f"{prefix}/staple.h5ad", compression='gzip')
 
     # versions
     with open("versions.yml", "w") as f:
