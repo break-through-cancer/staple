@@ -1,0 +1,197 @@
+{
+    "ui": {},
+    "form": {
+        "title": "STAPLE: spatial transcriptomics pipeline (sheets)",
+        "type": "object",
+        "properties": {
+            "input": {
+                "type": "string",
+                "title": "Samplesheet",
+                "description": "One row per sample. Pick the data for each sample from the project; add a reference scRNA-seq file per sample if you have one.",
+                "schema": "samplesheet"
+            },
+            "format": {
+                "type": "string",
+                "title": "Data format",
+                "enum": ["visium", "visium_hd", "xenium", "anndata"],
+                "default": "anndata"
+             },
+            "data": {
+                "title": "Data format options",
+                "type": "object",
+                "properties": {
+                    "hd": {
+                        "type": "string",
+                        "title": "Table name if Visium HD format",
+                        "default": ""
+                    }
+                }
+            },
+            "preprocessing":{
+                "title": "Preprocessing options",
+                "type": "object",
+                "properties":{
+                    "n_top_genes": {
+                        "type": "integer",
+                        "title": "Number of Top Genes (by var) to keep - use lower number for faster runtime",
+                        "default": 99999
+                    },
+                    "drop_prefix":{
+                        "type": "string",
+                        "title": "Prefix to drop from gene names. Can be comma-separated for multiple prefixes",
+                        "default": ""
+                    }
+                }
+            },
+            "deconvolution": {
+                "title": "Deconvolution / Cell Typing",
+                "type": "object",
+                "properties": {
+                    "skip": {
+                        "type": "boolean",
+                        "title": "Skip Deconvolution / Cell Typing",
+                        "description": "Rely on cell_type column in the input Anndata.",
+                        "default": false
+                    }
+                },
+                "if": {
+                    "properties": {
+                        "skip": { "const": false }
+                    },
+                    "required": ["skip"]
+                },
+                "then": {
+                    "properties": {
+                        "ref_deconvolution": {
+                            "title": "Reference-based deconvolution options",
+                            "type": "object",
+                            "properties": {
+                                "run_rctd": {
+                                    "type": "boolean",
+                                    "title": "Run RCTD Deconvolution",
+                                    "default": true
+                                },
+                                "reference_scrna": {
+                                    "type": "string",
+                                    "title": "Reference scRNA-seq h5ad dataset for RCTD deconvolution (URL or S3 URI)"
+                                },
+                                "type_col_scrna": {
+                                    "type": "string",
+                                    "title": "Column name in the reference scRNA-seq dataset that contains the cell type labels",
+                                    "default": "cell_type"
+                                }
+                            }
+                        },
+                        "ext_deconvolution": {
+                            "title": "External reference-based deconvolution options",
+                            "type": "object",
+                            "properties": {
+                                "find_annotations": {
+                                    "type": "boolean",
+                                    "title": "Look for External Spot Annotations (e.g. CODA) in the dataset files."
+                                }
+                            }
+                        },
+                        "noref_deconvolution": {
+                            "title": "Reference-free deconvolution options",
+                            "type": "object",
+                            "properties": {
+                                "n_cell_types": {
+                                    "type": "integer",
+                                    "title": "Number of Cell Types"
+                                },
+                                "run_bayestme": {
+                                    "type": "boolean",
+                                    "title": "Run BayesTME",
+                                    "default": false
+                                },
+                                "run_cogaps": {
+                                    "type": "boolean",
+                                    "title": "Run CoGAPS",
+                                    "default": false
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "interact":{
+                "title": "cell-cell interaction analysis",
+                "type": "object",
+                "properties": {
+                    "run_spacemarkers": {
+                        "type": "boolean",
+                        "title": "Enable SpaceMarkers"
+                    },
+                    "run_squidpy": {
+                        "type": "boolean",
+                        "title": "Enable Squidpy LigRec",
+                        "default": true
+                    }
+                }
+            },
+            "spatial": {
+                "title": "Spatial analysis options",
+                "type": "object",
+                "properties": {
+                    "sq_gr_ligrec_interactions_params":{
+                        "title": "Omnipath options (e.g. '{\"resources\": \"CellPhoneDB\"}')",
+                        "type": "string"
+                    },
+                    "sq_gr_co_occurrence_interval":{
+                        "title": "Number of distance bins to split co-occurrence analysis, or a list of intervals",
+                        "type": "string",
+                        "default": "100,200,300,400,500,600,700,800"
+                    },
+                    "na_as_value":{
+                        "title": "Replace NA in cell type with text, unset to keep as NA",
+                        "type": "boolean",
+                        "default": true
+                    }
+                }
+            },
+            "xsample":{
+                "title": "Cross-sample analysis options",
+                "type": "object",
+                "properties": {
+                    "run_xsample": {
+                        "type": "boolean",
+                        "title": "Enable Cross-sample analysis"
+                    },
+                    "spotlight": {
+                        "type": "string",
+                        "title": "Focus on these cell types in analysis (comma-separated, at least one recommended)"
+                    }
+                }
+            }
+        }
+    },
+    "structuredInputs": {
+        "samplesheet": {
+            "fileFormat": "CSV",
+            "schema": {
+                "title": "Samplesheet",
+                "description": "One row per sample. data_directory is the sample's data folder (Visium, Visium HD, Xenium) or its h5ad file (anndata). expression_profile is an optional matched scRNA-seq h5ad.",
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "sample": {
+                            "type": "string",
+                            "pattern": "^\\S+$"
+                        },
+                        "data_directory": {
+                            "type": "string",
+                            "format": "path"
+                        },
+                        "expression_profile": {
+                            "type": "string",
+                            "format": "file-path"
+                        }
+                    },
+                    "required": ["sample", "data_directory"]
+                }
+            }
+        }
+    }
+}
