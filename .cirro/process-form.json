@@ -1,9 +1,15 @@
 {
     "ui": {},
     "form": {
-        "title": "STAPLE: spatial transcriptomics pipeline",
+        "title": "STAPLE: spatial transcriptomics pipeline (sheets)",
         "type": "object",
         "properties": {
+            "input": {
+                "type": "string",
+                "title": "Samplesheet",
+                "description": "One row per sample. Pick the data for each sample from the project; add a reference scRNA-seq file per sample if you have one.",
+                "schema": "samplesheet"
+            },
             "format": {
                 "type": "string",
                 "title": "Data format",
@@ -156,6 +162,34 @@
                         "type": "string",
                         "title": "Focus on these cell types in analysis (comma-separated, at least one recommended)"
                     }
+                }
+            }
+        }
+    },
+    "structuredInputs": {
+        "samplesheet": {
+            "fileFormat": "CSV",
+            "schema": {
+                "title": "Samplesheet",
+                "description": "One row per sample. data_directory is the sample's data folder (Visium, Visium HD, Xenium) or its h5ad file (anndata). expression_profile is an optional matched scRNA-seq h5ad.",
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "sample": {
+                            "type": "string",
+                            "pattern": "^\\S+$"
+                        },
+                        "data_directory": {
+                            "type": "string",
+                            "format": "path"
+                        },
+                        "expression_profile": {
+                            "type": "string",
+                            "format": "file-path"
+                        }
+                    },
+                    "required": ["sample", "data_directory"]
                 }
             }
         }
