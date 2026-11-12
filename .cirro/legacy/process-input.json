@@ -1,7 +1,6 @@
 {
-    "input": "$.structuredInputs.samplesheet.path",
+    "cirro_input": "$.inputs",
     "outdir": "$.dataset.dataPath|/",
-    "format": "$.dataset.params.format",
     "drop_genes_prefix": "$.dataset.params.preprocessing.drop_prefix",
     "deconvolve": {
         "n_top_genes": "$.dataset.params.preprocessing.n_top_genes",
@@ -23,5 +22,6 @@
     "n_cell_types": "$.dataset.params.deconvolution.noref_deconvolution.n_cell_types",
     "ref_scrna": "$.dataset.params.deconvolution.ref_deconvolution.reference_scrna",
     "ref_scrna_type_col": "$.dataset.params.deconvolution.ref_deconvolution.type_col_scrna",
-    "visium_hd": "$.dataset.params.data.hd"
+    "visium_hd": "$.dataset.params.data.hd",
+    "format": "$.dataset.params.format"
 }
