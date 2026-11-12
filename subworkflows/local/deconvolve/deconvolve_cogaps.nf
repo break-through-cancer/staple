@@ -15,11 +15,11 @@ workflow COGAPS {
     versions = channel.empty()
 
     //example channel with cparams
-    ch_fixed_params = channel.of([niterations: params.niterations, sparse: params.sparse, distributed: params.distributed, nsets:params.nsets, nthreads:1])
+    ch_fixed_params = channel.of([seed: params.seed, niterations: params.niterations, sparse: params.sparse, distributed: params.distributed, nsets:params.nsets, nthreads:1, asynchronous_updates:params.asynchronous_updates])
 
     ch_cparams = ch_patterns
       .combine(ch_fixed_params)
-      .map { it -> tuple([id:it[0].toString(), npatterns:it[0], niterations:it[1].niterations, sparse:it[1].sparse, distributed:it[1].distributed, nsets:it[1].nsets, nthreads:it[1].nthreads]) }
+      .map { it -> tuple([id:it[0].toString(), npatterns:it[0], seed:it[1].seed, niterations:it[1].niterations, sparse:it[1].sparse, distributed:it[1].distributed, nsets:it[1].nsets, nthreads:it[1].nthreads, asynchronous_updates:it[1].asynchronous_updates]) }
 
     // convert adata to dgCMatrix
     COGAPS_ADATA2DGC(ch_adata)

@@ -442,7 +442,8 @@ nextflow_pipeline {
         tag "pipeline"
         when {
             params {
-                input = "../../../tests/data/samplesheets/multisample-test.csv"
+                anndata = true
+                input = "../../../tests/data/samplesheets/reference-free-test.csv"
                 max_memory = "8.GB"
                 max_cpus = 4
                 outdir = "output"
