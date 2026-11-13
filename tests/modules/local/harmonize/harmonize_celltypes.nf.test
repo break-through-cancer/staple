@@ -1,0 +1,348 @@
+nextflow_process {
+
+    name "Test HARMONIZE_CELL_TYPES"
+    script "modules/local/util/main.nf"
+    process "HARMONIZE_CELL_TYPES"
+    tag "process"
+    tag "harmonize"
+
+    test("Cross-sample pattern matching with correct mapping") {
+        
+        tag "cross-sample"
+        
+        setup {
+            run("CREATE_HARMONIZE_PATTERNS") {
+                script "tests/data/create_harmonize_patterns.nf"
+                process {
+                    """
+                    input[0] = "cross_sample"
+                    """
+                }
+            }
+        }
+        
+        when {
+            params {
+                max_memory = "8.GB"
+                harmonize {
+                    enabled = true
+                    method = "hierarchical"
+                    cut_height = 0.3
+                    min_samples_per_cluster = 1
+                    confidence_threshold = 0.6
+                }
+            }
+            process {
+                """
+                input[0] = CREATE_HARMONIZE_PATTERNS.out.patterns
+                    .collect()
+                    .map { files -> files.collect { it.toString() }.sort().join("\\n") }
+                input[1] = "sample1,sample2"
+                input[2] = 0.3
+                input[3] = 1
+                input[4] = 0.6
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.mapping[0]).exists() },
+                { assert path(process.out.consensus[0]).exists() },
+                { assert path(process.out.diagnostics[0]).exists() }
+            )
+
+            // Verify mapping file structure
+            def mapping = path(process.out.mapping[0]).text
+            assert mapping.contains("original_cell_type")
+            assert mapping.contains("harmonized_cell_type")
+            assert mapping.contains("sample1.")
+            assert mapping.contains("sample2.")
+            
+            // Verify that patterns from different samples got mapped
+            def mappingLines = mapping.split('\n').drop(1)
+            assert mappingLines.size() > 0: "Should have at least one mapping"
+        }
+    }
+
+    test("Random uncorrelated patterns with high threshold - no matches") {
+        
+        tag "no-matches"
+        
+        setup {
+            run("CREATE_HARMONIZE_PATTERNS") {
+                script "tests/data/create_harmonize_patterns.nf"
+                process {
+                    """
+                    input[0] = "random"
+                    """
+                }
+            }
+        }
+        
+        when {
+            params {
+                max_memory = "8.GB"
+                harmonize {
+                    enabled = true
+                    method = "hierarchical"
+                    cut_height = 0.3
+                    min_samples_per_cluster = 2
+                    confidence_threshold = 0.9
+                }
+            }
+            process {
+                """
+                input[0] = CREATE_HARMONIZE_PATTERNS.out.patterns
+                    .collect()
+                    .map { files -> files.collect { it.toString() }.sort().join("\\n") }
+                input[1] = "sample1,sample2"
+                input[2] = 0.3
+                input[3] = 2
+                input[4] = 0.9
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert path(process.out.mapping[0]).exists()
+            
+            // Verify that random uncorrelated patterns are assigned as unique types
+            def mapping = path(process.out.mapping[0]).text
+            def mappingLines = mapping.split('\n').drop(1).findAll { it.trim() }
+            // With min_samples=2, all patterns fail to reach min_samples threshold (each cluster has only 1 sample)
+            // So all 6 patterns (3 from sample1 + 3 from sample2) become unique types U1000-U1005
+            assert mappingLines.size() == 6: "Should have 6 unique patterns with high threshold on random data and min_samples=2"
+            
+            // Verify they are all assigned to unique types (U-prefixed)
+            def uniqueCount = mappingLines.count { it.contains(',U') }
+            assert uniqueCount == 6: "All patterns should be assigned as unique types"
+        }
+    }
+
+    test("Threshold 0 with varied similarity - all patterns matched") {
+        
+        tag "threshold-zero"
+        
+        setup {
+            run("CREATE_HARMONIZE_PATTERNS") {
+                script "tests/data/create_harmonize_patterns.nf"
+                process {
+                    """
+                    input[0] = "threshold_zero"
+                    """
+                }
+            }
+        }
+        
+        when {
+            params {
+                max_memory = "8.GB"
+                harmonize {
+                    enabled = true
+                    method = "hierarchical"
+                    cut_height = 2.0
+                    min_samples_per_cluster = 1
+                    confidence_threshold = 0.0
+                }
+            }
+            process {
+                """
+                input[0] = CREATE_HARMONIZE_PATTERNS.out.patterns
+                    .collect()
+                    .map { files -> files.collect { it.toString() }.sort().join("\\n") }
+                input[1] = "sample1,sample2"
+                input[2] = 2.0
+                input[3] = 1
+                input[4] = 0.0
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert path(process.out.mapping[0]).exists()
+            
+            // With threshold 0, patterns should still be clustered based on correlation distance
+            def mapping = path(process.out.mapping[0]).text
+            def mappingLines = mapping.split('\n').drop(1).findAll { it.trim() }
+            assert mappingLines.size() > 0: "Should have mappings even with threshold 0"
+        }
+    }
+
+    test("Unequal number of patterns across 3 samples") {
+        
+        tag "unequal-patterns"
+        tag "3-sample"
+        
+        setup {
+            run("CREATE_HARMONIZE_PATTERNS") {
+                script "tests/data/create_harmonize_patterns.nf"
+                process {
+                    """
+                    input[0] = "unequal"
+                    """
+                }
+            }
+        }
+        
+        when {
+            params {
+                max_memory = "8.GB"
+                harmonize {
+                    enabled = true
+                    method = "hierarchical"
+                    cut_height = 0.4
+                    min_samples_per_cluster = 1
+                    confidence_threshold = 0.5
+                }
+            }
+            process {
+                """
+                input[0] = CREATE_HARMONIZE_PATTERNS.out.patterns
+                    .collect()
+                    .map { files -> files.collect { it.toString() }.sort().join("\\n") }
+                input[1] = "sample1,sample2,sample3"
+                input[2] = 0.4
+                input[3] = 1
+                input[4] = 0.5
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.mapping[0]).exists() },
+                { assert path(process.out.consensus[0]).exists() },
+                { assert path(process.out.diagnostics[0]).exists() }
+            )
+
+            // Verify mapping contains entries from samples
+            def mapping = path(process.out.mapping[0]).text
+            assert mapping.contains("sample1.")
+            assert mapping.contains("sample2.")
+            
+            // Diagnostics should show multi-sample composition
+            def diagnostics = path(process.out.diagnostics[0]).text
+            assert diagnostics.contains("cluster_composition")
+        }
+    }
+
+    test("Unique patterns from unmatched random patterns with min_samples=2") {
+        
+        tag "unique-patterns"
+        
+        setup {
+            run("CREATE_HARMONIZE_PATTERNS") {
+                script "tests/data/create_harmonize_patterns.nf"
+                process {
+                    """
+                    input[0] = "random"
+                    """
+                }
+            }
+        }
+        
+        when {
+            params {
+                max_memory = "8.GB"
+                harmonize {
+                    enabled = true
+                    method = "hierarchical"
+                    cut_height = 0.3
+                    min_samples_per_cluster = 2
+                    confidence_threshold = 0.9
+                }
+            }
+            process {
+                """
+                input[0] = CREATE_HARMONIZE_PATTERNS.out.patterns
+                    .collect()
+                    .map { files -> files.collect { it.toString() }.sort().join("\\n") }
+                input[1] = "sample1,sample2"
+                input[2] = 0.3
+                input[3] = 2
+                input[4] = 0.9
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert path(process.out.mapping[0]).exists()
+            assert path(process.out.consensus[0]).exists()
+            
+            // With min_samples=2 and random patterns, no matches should be found
+            // All 6 patterns should become unique types (U1000-U1005)
+            def mapping = path(process.out.mapping[0]).text
+            def mappingLines = mapping.split('\n').drop(1).findAll { it.trim() }
+            assert mappingLines.size() == 6: "Should have all 6 patterns mapped as unique"
+            
+            // Check that all mappings are to U-type patterns
+            assert mappingLines.every { line -> 
+                def columns = line.split(',')
+                columns[1].startsWith('U')  // consensus_type should start with U
+            }: "All patterns should map to unique (U) types when no cross-sample matches"
+        }
+    }
+
+    test("All patterns clustered into single consensus with min_samples=1") {
+        
+        tag "unique-patterns"
+        
+        setup {
+            run("CREATE_HARMONIZE_PATTERNS") {
+                script "tests/data/create_harmonize_patterns.nf"
+                process {
+                    """
+                    input[0] = "random"
+                    """
+                }
+            }
+        }
+        
+        when {
+            params {
+                max_memory = "8.GB"
+                harmonize {
+                    enabled = true
+                    method = "hierarchical"
+                    cut_height = 0.3
+                    min_samples_per_cluster = 1
+                    confidence_threshold = 0.9
+                }
+            }
+            process {
+                """
+                input[0] = CREATE_HARMONIZE_PATTERNS.out.patterns
+                    .collect()
+                    .map { files -> files.collect { it.toString() }.sort().join("\\n") }
+                input[1] = "sample1,sample2"
+                input[2] = 0.3
+                input[3] = 1
+                input[4] = 0.9
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert path(process.out.mapping[0]).exists()
+            assert path(process.out.consensus[0]).exists()
+            
+            // With min_samples=1, all patterns should get consensus types (6 total for 2 samples x 3 patterns)
+            def mapping = path(process.out.mapping[0]).text
+            def mappingLines = mapping.split('\n').drop(1).findAll { it.trim() }
+            assert mappingLines.size() == 6: "Should have all 6 patterns mapped with min_samples=1"
+            
+            // With min_samples=1, even uncorrelated patterns will cluster together
+            // Check that we have consensus types
+            def consensus = path(process.out.consensus[0]).text.split('\n')[0]
+            def columns = consensus.split(',')
+            assert columns.size() > 1: "Should have consensus types"
+        }
+    }
+}

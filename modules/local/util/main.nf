@@ -527,3 +527,46 @@ process OMNIPATH_GET {
     script:
     template 'get_omnipath.py'
 }
+
+process HARMONIZE_CELL_TYPES {
+    //Harmonize cell types across multiple samples using hierarchical clustering
+    tag "cross_sample"
+    label "process_medium"
+    container "ghcr.io/break-through-cancer/btc-containers/scverse@sha256:ed44380c6e6e73fc575b743eba864941c26880053e50c3d70b5c9bfc526c0520"
+    publishDir "${params.outdir}/harmonize", mode: 'copy', pattern: '*.{csv,json,png}'
+
+    input:
+        val(file_paths_str)         // newline-separated paths as a string
+        val(sample_ids)             // corresponding sample IDs (comma-separated string)
+        val(cut_height)             // dendrogram cut threshold
+        val(min_samples)            // minimum samples per cluster
+        val(confidence_threshold)   // min correlation to assign pattern
+
+    output:
+        path("cell_type_mapping.csv"), emit: mapping
+        path("consensus_patterns.csv"), emit: consensus
+        path("harmonization_diagnostics.json"), emit: diagnostics
+        path("dendrogram.png"), emit: dendrogram
+        path("versions.yml"), emit: versions
+
+    script:
+    template 'harmonize_celltypes.py'
+}
+
+process STAPLE_ATTACH_HARMONIZE {
+    //Apply harmonized cell type names to an adata object
+    tag "$meta.id"
+    label "process_medium"
+    container "ghcr.io/break-through-cancer/btc-containers/scverse@sha256:ed44380c6e6e73fc575b743eba864941c26880053e50c3d70b5c9bfc526c0520"
+
+    input:
+        tuple val(meta), path(adata), path(harmonization_mapping), val(source)
+
+    output:
+        tuple val(meta), path("${prefix}/staple.h5ad"), emit: adata
+        path("versions.yml"), emit: versions
+
+    script:
+    prefix = task.ext.prefix ?: "${meta.id}"
+    template 'attach_harmonized_labels.py'
+}

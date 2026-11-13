@@ -5,6 +5,7 @@ include { RCTD } from '../../../modules/local/rctd/rctd'
 include { ATTACH_CELL_PROBS as EXTERNAL_PROBS } from '../../../modules/local/util/'
 include { ATTACH_CELL_PROBS as RCTD_PROBS } from '../../../modules/local/util/'
 include { ATTACH_CELL_PROBS as COGAPS_PROBS } from '../../../modules/local/util/'
+include { HARMONIZE } from './harmonize_celltypes'
 
 workflow DECONVOLVE {
     take:
@@ -16,6 +17,10 @@ workflow DECONVOLVE {
 
     versions = channel.empty()
     ch_deconvolved = channel.empty()  //outputs: meta, optional cell type probs, optional deconvolution object
+    ch_harmonize_mapping = channel.empty()
+    ch_harmonize_consensus = channel.empty()
+    ch_harmonize_diagnostics = channel.empty()
+    ch_harmonize_dendrogram = channel.empty()
 
     // Skip deconvolution and work with existing cell types
     // cell_type column expected as per cellXgene specification
@@ -85,7 +90,28 @@ workflow DECONVOLVE {
         versions = versions.mix(COGAPS.out.versions)
     }
 
+    // Harmonize reference-free cell types across samples (optional)
+    if(params.containsKey('harmonize') && params.harmonize.enabled) {
+        // Check for reference-free methods and multiple samples
+        def has_ref_free = params.deconvolve.cogaps || params.deconvolve.bayestme
+        
+        if(has_ref_free) {
+            log.info "🔗 Cell type harmonization enabled for multi-sample reference-free deconvolution"
+            HARMONIZE(ch_deconvolved)
+            ch_deconvolved = HARMONIZE.out.ch_harmonized
+            versions = versions.mix(HARMONIZE.out.versions)
+            ch_harmonize_mapping = HARMONIZE.out.mapping
+            ch_harmonize_consensus = HARMONIZE.out.consensus
+            ch_harmonize_diagnostics = HARMONIZE.out.diagnostics
+            ch_harmonize_dendrogram = HARMONIZE.out.dendrogram
+        }
+    }
+
     emit:
         ch_deconvolved
+        harmonize_mapping = ch_harmonize_mapping
+        harmonize_consensus = ch_harmonize_consensus
+        harmonize_diagnostics = ch_harmonize_diagnostics
+        harmonize_dendrogram = ch_harmonize_dendrogram
         versions
 }
