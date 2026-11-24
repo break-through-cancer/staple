@@ -127,6 +127,12 @@
                         "type": "boolean",
                         "title": "Enable Squidpy LigRec",
                         "default": true
+                    },
+                    "ref_ligrec": {
+                        "type": "string",
+                        "format": "file-path",
+                        "pattern": "\\.csv$",
+                        "title": "Ligand-receptor database (CSV). Leave empty to use OmniPath."
                     }
                 }
             },

@@ -18,6 +18,7 @@
         "spotlight": "$.dataset.params.xsample.spotlight"
     },
     "sq_gr_ligrec_interactions_params": "$.dataset.params.spatial.sq_gr_ligrec_interactions_params",
+    "ref_ligrec": "$.dataset.params.interact.ref_ligrec",
     "sq_gr_co_occurrence_interval": "$.dataset.params.spatial.sq_gr_co_occurrence_interval",
     "na_as_value": "$.dataset.params.spatial.na_as_value",
     "n_cell_types": "$.dataset.params.deconvolution.noref_deconvolution.n_cell_types",
