@@ -7,7 +7,8 @@ process CREATE_HARMONIZE_PATTERNS {
         val test_type
 
     output:
-        path "patterns/*.csv", emit: patterns
+        path "patterns/*/patterns.csv", emit: patterns
+        path("adatas/*.h5ad"), emit: adatas, optional: true
 
     script:
     template 'create_harmonize_patterns.py'

@@ -86,25 +86,16 @@ workflow DECONVOLVE {
                         .join( ch_adata ).map { it-> tuple(it[0], it[1], it[2], "cogaps") } ) //meta, cell types, adata, label
         ch_cogaps_output = ch_cogaps_output.join(COGAPS_PROBS.out.adata)
             .map { it-> [meta:it[0], cell_probs:it[1], obj:it[2]] }
-        ch_deconvolved = ch_deconvolved.mix(ch_cogaps_output)
-        versions = versions.mix(COGAPS.out.versions)
-    }
-
-    // Harmonize reference-free cell types across samples (optional)
-    if(params.containsKey('harmonize') && params.harmonize.enabled) {
-        // Check for reference-free methods and multiple samples
-        def has_ref_free = params.deconvolve.cogaps || params.deconvolve.bayestme
-        
-        if(has_ref_free) {
-            log.info "🔗 Cell type harmonization enabled for multi-sample reference-free deconvolution"
-            HARMONIZE(ch_deconvolved)
-            ch_deconvolved = HARMONIZE.out.ch_harmonized
+        if (params.containsKey('harmonize') && params.harmonize.enabled) {
+            HARMONIZE(ch_cogaps_output, COGAPS.out.feature_patterns)
+            ch_cogaps_output = HARMONIZE.out.ch_harmonized
             versions = versions.mix(HARMONIZE.out.versions)
             ch_harmonize_mapping = HARMONIZE.out.mapping
             ch_harmonize_consensus = HARMONIZE.out.consensus
             ch_harmonize_diagnostics = HARMONIZE.out.diagnostics
             ch_harmonize_dendrogram = HARMONIZE.out.dendrogram
         }
+        ch_deconvolved = ch_deconvolved.mix(ch_cogaps_output)
     }
 
     emit:

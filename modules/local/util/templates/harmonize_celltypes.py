@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import base64
+import csv
 import json
 import logging
 from pathlib import Path
@@ -16,45 +18,72 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger()
 
 if __name__ == "__main__":
-    sample_ids_str = '''${sample_ids}'''
-    if sample_ids_str.startswith('[') and sample_ids_str.endswith(']'):
-        sample_ids_str = sample_ids_str[1:-1]
-    sample_ids = [x.strip() for x in sample_ids_str.split(',') if x.strip()]
-
-    file_paths_str = '''${file_paths_str}'''
-    file_paths = [x.strip() for x in file_paths_str.split(chr(10)) if x.strip()]
-
     cut_height = float('${cut_height}')
     min_samples = int('${min_samples}')
     confidence_threshold = float('${confidence_threshold}')
-
-    log.info(f"loading {len(sample_ids)} samples from {len(file_paths)} files")
 
 # load patterns
 matrices = {}
 all_patterns = []
 sample_pattern_ranges = {}
 pattern_names = []
+pattern_sample_ids = []
+pattern_columns = []
 
-for sample_id, filepath in zip(sample_ids, file_paths):
-    p = Path(filepath)
-    if not p.exists():
-        log.error(f"file not found: {filepath}")
-        exit(1)
+for entry in json.loads(base64.b64decode('${manifest}')):
+    sample_id = entry['sample_id']
+    filepath = Path(entry['path'])
+    if not isinstance(sample_id, str) or not sample_id:
+        raise ValueError(f"{filepath}: sample ID must be a non-empty string")
+    if sample_id in matrices:
+        raise ValueError(f"duplicate sample ID: {sample_id}")
 
-    df = pd.read_csv(filepath, index_col=0)
+    with filepath.open(newline='') as f:
+        header = next(csv.reader(f))
+    if len(header) < 2 or header[0] != '':
+        raise ValueError(f"{filepath}: expected an unnamed feature index and at least one pattern column")
+    if any(not name for name in header[1:]) or len(set(header[1:])) != len(header) - 1:
+        raise ValueError(f"{filepath}: pattern names must be non-empty and unique")
+
+    df = pd.read_csv(filepath, header=0, names=range(len(header)), dtype=str, keep_default_na=False)
+    df = df.set_index(0)
+    df.index.name = None
+    df.columns = header[1:]
+    if not df.index.is_unique or (df.index == '').any():
+        raise ValueError(f"{filepath}: feature IDs must be non-empty and unique")
+    df = df.apply(pd.to_numeric, errors='raise')
+    if not np.isfinite(df.to_numpy()).all():
+        raise ValueError(f"{filepath}: pattern values must be finite")
     matrices[sample_id] = df
-    log.info(f"  {sample_id}: {df.shape[0]} cells x {df.shape[1]} patterns")
+    log.info(f"  {sample_id}: {df.shape[0]} features x {df.shape[1]} patterns")
+
+if not matrices:
+    raise ValueError("no pattern matrices provided")
+
+sample_ids = sorted(matrices)
+features = matrices[sample_ids[0]].index
+for sample_id in sample_ids[1:]:
+    features = features.intersection(matrices[sample_id].index, sort=False)
+if len(features) < 2:
+    raise ValueError(f"at least two shared features are required, found {len(features)}")
+log.info(f"using {len(features)} shared features across {len(sample_ids)} samples")
+
+for sample_id in sample_ids:
+    df = matrices[sample_id].loc[features]
 
     start_idx = len(all_patterns)
     for col_name in df.columns:
         all_patterns.append(df[col_name].values)
         pattern_names.append(f"{sample_id}.{col_name}")
+        pattern_sample_ids.append(sample_id)
+        pattern_columns.append(col_name)
     end_idx = len(all_patterns)
 
     sample_pattern_ranges[sample_id] = (start_idx, end_idx)
 
 log.info(f"total patterns: {len(pattern_names)}")
+if len(pattern_names) < 2:
+    raise ValueError("at least two patterns are required for clustering")
 
 # compute distances
 log.info("computing pattern correlations")
@@ -97,6 +126,10 @@ for cluster_id, composition in cluster_composition.items():
         valid_clusters.append(cluster_id)
 
 log.info(f"after filtering: {len(valid_clusters)} valid clusters")
+consensus_names = {
+    cluster_id: f"C{index:03d}"
+    for index, cluster_id in enumerate(sorted(valid_clusters), start=1)
+}
 
 # generate mappings
 log.info("generating harmonized cell type names")
@@ -126,7 +159,7 @@ for cluster_id in sorted(valid_clusters):
         [f"{sid}:{composition[sid]}" for sid in sample_ids]
     )
 
-    harmonized_name = f"C{cluster_id:03d}"
+    harmonized_name = consensus_names[cluster_id]
 
     for pattern_idx, (pattern_name, confidence) in enumerate(zip(cluster_pattern_names, confidences)):
         if confidence >= confidence_threshold:
@@ -135,7 +168,9 @@ for cluster_id in sorted(valid_clusters):
                 'harmonized_cell_type': harmonized_name,
                 'cluster': cluster_id,
                 'confidence': confidence,
-                'composition': composition_str
+                'composition': composition_str,
+                'sample_id': pattern_sample_ids[cluster_patterns[pattern_idx]],
+                'original_pattern': pattern_columns[cluster_patterns[pattern_idx]]
             })
         
         # Mark this pattern as mapped (belongs to a valid cluster)
@@ -152,14 +187,16 @@ for cluster_id in sorted(invalid_clusters):
     for pattern_idx in cluster_patterns:
         if pattern_idx not in mapped_pattern_indices:
             pattern_name = pattern_names[pattern_idx]
-            sample_name = pattern_name.split('.')[0]
+            sample_name = pattern_sample_ids[pattern_idx]
             
             mappings.append({
                 'original_cell_type': pattern_name,
                 'harmonized_cell_type': f"U{next_unique_id:03d}",
                 'cluster': None,
                 'confidence': 1.0,
-                'composition': f"{sample_name}:1"
+                'composition': f"{sample_name}:1",
+                'sample_id': sample_name,
+                'original_pattern': pattern_columns[pattern_idx]
             })
             next_unique_id += 1
             mapped_pattern_indices.add(pattern_idx)
@@ -168,7 +205,10 @@ n_unique = len([m for m in mappings if m['cluster'] is None])
 if n_unique > 0:
     log.info(f"added {n_unique} unique pattern mappings from invalid clusters")
 
-mapping_df = pd.DataFrame(mappings)
+mapping_df = pd.DataFrame(mappings, columns=[
+    'original_cell_type', 'harmonized_cell_type', 'cluster', 'confidence',
+    'composition', 'sample_id', 'original_pattern'
+])
 mapping_df.to_csv('cell_type_mapping.csv', index=False)
 log.info(f"mapped {len(mapping_df)} patterns")
 
@@ -186,7 +226,7 @@ consensus_data = []
 
 # Add consensus for valid clusters
 for cluster_id in sorted(valid_clusters):
-    consensus_cols.append(f"C{cluster_id:03d}")
+    consensus_cols.append(consensus_names[cluster_id])
     consensus_data.append(cluster_consensus[cluster_id])
 
 # Add individual patterns from invalid clusters as unique consensus types
@@ -204,7 +244,8 @@ for cluster_id in sorted(invalid_clusters):
 if consensus_data:
     consensus_df = pd.DataFrame(
         np.column_stack(consensus_data),
-        columns=consensus_cols
+        columns=consensus_cols,
+        index=features
     )
 else:
     # Create empty dataframe when no valid clusters
@@ -253,4 +294,3 @@ with open("versions.yml", "w") as f:
     f.write("    numpy: {}\\n".format(version("numpy")))
     f.write("    scipy: {}\\n".format(version("scipy")))
     f.write("    matplotlib: {}\\n".format(version("matplotlib")))
-

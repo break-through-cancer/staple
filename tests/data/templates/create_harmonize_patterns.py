@@ -3,6 +3,7 @@
 
 import numpy as np
 import pandas as pd
+import anndata as ad
 from pathlib import Path
 
 
@@ -14,13 +15,13 @@ def create_cross_sample_patterns(n_genes=50, seed=42):
     
     patterns = {
         'sample1': {
-            'Pattern_1': shared_pattern,
+            'shared': shared_pattern,
             'Pattern_2': np.random.rand(n_genes) * 0.5,
             'Pattern_3': np.random.rand(n_genes) * 0.5,
         },
         'sample2': {
             'Pattern_1': np.random.rand(n_genes) * 0.5,
-            'Pattern_2': shared_pattern,
+            'cluster-B': shared_pattern,
             'Pattern_3': np.random.rand(n_genes) * 0.5,
         }
     }
@@ -88,7 +89,7 @@ def create_threshold_zero_patterns(n_genes=50, seed=42):
 
 def patterns_to_csv(patterns_dict, n_genes=50):
     """Convert pattern dict to CSV format string."""
-    header = "Gene," + ",".join(patterns_dict.keys())
+    header = "," + ",".join(patterns_dict.keys())
     rows = []
     for gene_idx in range(n_genes):
         row = f"GENE_{gene_idx:04d}"
@@ -98,7 +99,7 @@ def patterns_to_csv(patterns_dict, n_genes=50):
     return header + "\\n" + "\\n".join(rows)
 
 
-def save_patterns(patterns_dict, output_dir):
+def save_patterns(patterns_dict, output_dir, test_type):
     """Save patterns to CSV files."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -106,7 +107,18 @@ def save_patterns(patterns_dict, output_dir):
     files = {}
     for sample_name, patterns in sorted(patterns_dict.items()):
         csv_content = patterns_to_csv(patterns)
-        csv_path = output_dir / f"{sample_name}_patterns.csv"
+        if test_type == "cross_sample" and sample_name == "sample2":
+            lines = csv_content.splitlines()
+            csv_content = "\\n".join([lines[0]] + list(reversed(lines[2:])))
+        elif test_type == "no_index":
+            csv_content = "gene" + csv_content
+        elif test_type == "no_overlap" and sample_name == "sample2":
+            csv_content = csv_content.replace("GENE_", "OTHER_")
+        if test_type == "cross_sample":
+            csv_content = csv_content.replace("GENE_", "")
+        sample_dir = output_dir / sample_name
+        sample_dir.mkdir(parents=True, exist_ok=True)
+        csv_path = sample_dir / "patterns.csv"
         csv_path.write_text(csv_content)
         files[sample_name] = str(csv_path)
     
@@ -117,7 +129,7 @@ if __name__ == "__main__":
     # Nextflow template variables
     test_type = "${test_type}"
     
-    if test_type == "cross_sample":
+    if test_type in ("cross_sample", "no_index", "no_overlap"):
         patterns = create_cross_sample_patterns()
     elif test_type == "random":
         patterns = create_random_patterns()
@@ -128,4 +140,14 @@ if __name__ == "__main__":
     else:
         raise ValueError(f"Unknown test type: {test_type}")
     
-    save_patterns(patterns, "patterns")
+    save_patterns(patterns, "patterns", test_type)
+    if test_type == "cross_sample":
+        Path("adatas").mkdir(exist_ok=True)
+        for sample_name, sample_patterns in patterns.items():
+            pattern_name = "shared" if sample_name == "sample1" else "cluster-B"
+            obs = pd.DataFrame({"cell_type": [pattern_name]}, index=["spot"])
+            adata = ad.AnnData(np.ones((1, 1)), obs=obs)
+            adata.uns["cell_type_composition"] = pd.DataFrame(
+                [[1.0] * len(sample_patterns)], index=obs.index, columns=sample_patterns
+            )
+            adata.write_h5ad(f"adatas/{sample_name}.h5ad")

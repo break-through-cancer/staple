@@ -438,6 +438,7 @@ process CELL_TYPES_FROM_COGAPS {
         tuple val(meta), path(cogaps_obj)
     output:
         tuple val(meta), path("${prefix}/cogaps_cell_types.csv"), emit: cogaps_cell_types
+        tuple val(meta), path("${prefix}/cogaps_patterns.csv"),    emit: patterns
         path("versions.yml"),                                     emit: versions
 
     script:
@@ -536,8 +537,7 @@ process HARMONIZE_CELL_TYPES {
     publishDir "${params.outdir}/harmonize", mode: 'copy', pattern: '*.{csv,json,png}'
 
     input:
-        val(file_paths_str)         // newline-separated paths as a string
-        val(sample_ids)             // corresponding sample IDs (comma-separated string)
+        tuple val(sample_ids), path(patterns, stageAs: "?/*")
         val(cut_height)             // dendrogram cut threshold
         val(min_samples)            // minimum samples per cluster
         val(confidence_threshold)   // min correlation to assign pattern
@@ -550,6 +550,13 @@ process HARMONIZE_CELL_TYPES {
         path("versions.yml"), emit: versions
 
     script:
+    pattern_files = patterns instanceof List ? patterns : [patterns]
+    if (sample_ids.size() != pattern_files.size()) {
+        error "Expected one sample ID per pattern matrix"
+    }
+    manifest = groovy.json.JsonOutput.toJson(
+        [sample_ids, pattern_files].transpose().collect { id, file -> [sample_id: id, path: file.toString()] }
+    ).bytes.encodeBase64().toString()
     template 'harmonize_celltypes.py'
 }
 

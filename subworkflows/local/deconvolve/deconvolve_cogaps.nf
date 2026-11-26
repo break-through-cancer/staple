@@ -47,5 +47,6 @@ workflow COGAPS {
 
     emit:
         ch_deconvolved
+        feature_patterns = COGAPS_CELL_TYPES.out.patterns
         versions
 }

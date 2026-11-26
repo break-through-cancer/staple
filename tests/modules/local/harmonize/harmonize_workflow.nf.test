@@ -1,0 +1,58 @@
+nextflow_workflow {
+    name "Test HARMONIZE workflow"
+    script "subworkflows/local/deconvolve/harmonize_celltypes.nf"
+    workflow "HARMONIZE"
+    tag "harmonize"
+
+    test("Keep sample IDs with patterns and preserve spot factors") {
+        setup {
+            run("CREATE_HARMONIZE_PATTERNS") {
+                script "tests/data/create_harmonize_patterns.nf"
+                process {
+                    """
+                    input[0] = "cross_sample"
+                    """
+                }
+            }
+        }
+
+        when {
+            params {
+                max_memory = "8.GB"
+                harmonize {
+                    cut_height = 0.3
+                    min_samples_per_cluster = 2
+                    confidence_threshold = 0.6
+                }
+            }
+            workflow {
+                """
+                ch_factors = CREATE_HARMONIZE_PATTERNS.out.patterns.flatMap { it }.map { patterns ->
+                    def sample = patterns.parent.fileName.toString()
+                    tuple(sample, patterns)
+                }
+                ch_adatas = CREATE_HARMONIZE_PATTERNS.out.adatas.flatMap { it }.map { adata ->
+                    tuple(adata.baseName, adata)
+                }
+                input[0] = ch_factors.join(ch_adatas).map { sample, factors, adata ->
+                    def sampleId = sample == 'sample1' ? '01' : '01.child'
+                    [meta: [id: sampleId], cell_probs: factors, obj: adata]
+                }
+                input[1] = ch_factors.map { sample, patterns ->
+                    def sampleId = sample == 'sample1' ? '01' : '01.child'
+                    tuple([id: sampleId], patterns)
+                }
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.out.ch_harmonized.size() == 2
+            assert workflow.out.ch_harmonized.every { it.cell_probs != null && path(it.obj).exists() }
+            def mapping = path(workflow.out.mapping[0]).text
+            def rows = mapping.split('\n').drop(1).collect { it.split(',') }
+            assert rows.find { it[0] == "01.shared" }[1] == rows.find { it[0] == "01.child.cluster-B" }[1]
+        }
+    }
+}

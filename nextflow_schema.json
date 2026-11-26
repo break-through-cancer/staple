@@ -255,12 +255,12 @@
         },
         "harmonize": {
             "type": "object",
-            "description": "Cell type harmonization for reference-free deconvolution",
+            "description": "Cross-sample cell type harmonization (currently wired to CoGAPS)",
             "properties": {
                 "enabled": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Enable cross-sample cell type harmonization (multi-sample reference-free only)"
+                    "description": "Enable cross-sample harmonization of CoGAPS patterns"
                 },
                 "method": {
                     "type": "string",

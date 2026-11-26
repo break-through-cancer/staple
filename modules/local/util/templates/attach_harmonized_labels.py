@@ -28,19 +28,20 @@ if __name__ == "__main__":
     adata = ad.read_h5ad(adata_path)
 
     log.info(f"loading mapping from {mapping_path}")
-    mapping = pd.read_csv(mapping_path)
+    mapping = pd.read_csv(
+        mapping_path,
+        dtype={'sample_id': str, 'original_pattern': str},
+        keep_default_na=False,
+    )
     log.info(f"mapping contains {len(mapping)} entries")
 
     # extract sample-specific mapping
-    sample_mapping = mapping[mapping['original_cell_type'].str.startswith(f"{sample_id}.")]
+    sample_mapping = mapping[mapping['sample_id'].astype(str) == sample_id]
     log.info(f"found {len(sample_mapping)} entries for {sample_id}")
 
     if len(sample_mapping) == 0:
         log.warning(f"no mapping found for {sample_id}")
-        unique_samples = set(
-            orig.split('.')[0] for orig in mapping['original_cell_type']
-            if '.' in orig
-        )
+        unique_samples = set(mapping['sample_id'].astype(str))
         if unique_samples:
             log.warning(f"available samples: {sorted(unique_samples)}")
 
@@ -49,8 +50,7 @@ if __name__ == "__main__":
     confidence_dict = {}
 
     for _, row in sample_mapping.iterrows():
-        orig_full = row['original_cell_type']
-        pattern_name = orig_full.split('.', 1)[1] if '.' in orig_full else orig_full
+        pattern_name = row['original_pattern']
 
         orig_to_harmonized[pattern_name] = row['harmonized_cell_type']
 
