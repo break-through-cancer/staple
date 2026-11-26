@@ -45,6 +45,14 @@ Load dataset uses [spatialdata.io](https://spatialdata.scverse.org/projects/io/e
 
 The deconvolution step performs cell type annotation of the spatial dataset using the provided single-cell reference dataset, by reference-free methods, or using an external annotation provided by the user. The output is stored in the `<tool>/` directory as an AnnData object containing the cell type annotation in `.obs`, where `<tool>` is the name of the deconvolution method used (e.g. `RCTD`, `CoGAPS`, `BayesTME`, or `external`). If a tool does not directly output an AnnData object, the tool-agnostic output will be saved, too.
 
+When `--harmonize.enabled true` is used with CoGAPS, `harmonize/` contains
+`cell_type_mapping.csv`, `consensus_patterns.csv`, `harmonization_diagnostics.json`,
+and `dendrogram.png`. CoGAPS gene loadings are compared using the intersection
+of gene IDs across samples; spot-level factors remain available for annotation.
+Consensus patterns are named consecutively (`C001`, `C002`, ...), while unmatched
+patterns are named `U1000`, `U1001`, ... . These labels are specific to the run;
+the mapping file retains the original pattern names and clustering IDs.
+
 ### QC
 
 QC module does not produce any output files, but the results of the QC checks are visualised in the MultiQC report and are also available in the `multiqc/multiqc_data/` directory.
