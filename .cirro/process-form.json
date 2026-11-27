@@ -103,6 +103,16 @@
                                     "type": "boolean",
                                     "title": "Run CoGAPS",
                                     "default": false
+                                },
+                                "cogaps_npatterns": {
+                                    "type": "string",
+                                    "title": "CoGAPS number of patterns (comma-separated list to run several, e.g. '5,10')",
+                                    "default": "5"
+                                },
+                                "cogaps_niterations": {
+                                    "type": "integer",
+                                    "title": "CoGAPS number of iterations",
+                                    "default": 100
                                 }
                             }
                         }
