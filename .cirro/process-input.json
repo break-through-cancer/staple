@@ -10,6 +10,9 @@
         "external": "$.dataset.params.deconvolution.ext_deconvolution.find_annotations",
         "skip": "$.dataset.params.deconvolution.skip"
     },
+    "harmonize": {
+        "enabled": "$.dataset.params.deconvolution.noref_deconvolution.harmonize"
+    },
     "analyze":{
         "spacemarkers": "$.dataset.params.interact.run_spacemarkers",
         "squidpy": "$.dataset.params.interact.run_squidpy",
@@ -19,6 +22,8 @@
     "sq_gr_ligrec_interactions_params": "$.dataset.params.spatial.sq_gr_ligrec_interactions_params",
     "sq_gr_co_occurrence_interval": "$.dataset.params.spatial.sq_gr_co_occurrence_interval",
     "na_as_value": "$.dataset.params.spatial.na_as_value",
+    "npatterns": "$.dataset.params.deconvolution.noref_deconvolution.cogaps_npatterns",
+    "niterations": "$.dataset.params.deconvolution.noref_deconvolution.cogaps_niterations",
     "n_cell_types": "$.dataset.params.deconvolution.noref_deconvolution.n_cell_types",
     "ref_scrna": "$.dataset.params.deconvolution.ref_deconvolution.reference_scrna",
     "ref_scrna_type_col": "$.dataset.params.deconvolution.ref_deconvolution.type_col_scrna",

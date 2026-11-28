@@ -10,7 +10,7 @@ workflow COGAPS {
 
     main:
 
-    def patterns = params.npatterns.split(',').collect { it -> it.toInteger() }
+    def patterns = params.npatterns.toString().split(',').collect { it -> it.trim() }.findAll { it }.collect { it -> it.toInteger() }
     ch_patterns = channel.from(patterns)
     versions = channel.empty()
 
