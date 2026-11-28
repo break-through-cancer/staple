@@ -10,6 +10,9 @@
         "external": "$.dataset.params.deconvolution.ext_deconvolution.find_annotations",
         "skip": "$.dataset.params.deconvolution.skip"
     },
+    "harmonize": {
+        "enabled": "$.dataset.params.deconvolution.noref_deconvolution.harmonize"
+    },
     "analyze":{
         "spacemarkers": "$.dataset.params.interact.run_spacemarkers",
         "squidpy": "$.dataset.params.interact.run_squidpy",

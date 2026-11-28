@@ -113,6 +113,11 @@
                                     "type": "integer",
                                     "title": "CoGAPS number of iterations",
                                     "default": 100
+                                },
+                                "harmonize": {
+                                    "type": "boolean",
+                                    "title": "Harmonize CoGAPS cell types across samples",
+                                    "default": false
                                 }
                             }
                         }
